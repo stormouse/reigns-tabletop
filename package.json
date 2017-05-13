@@ -1,0 +1,19 @@
+{
+  "name": "reigns-tabletop",
+  "version": "1.0.0",
+  "description": "a tabletop game inspired by Reigns",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stormouse/reigns-tabletop.git"
+  },
+  "author": "shawnc",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stormouse/reigns-tabletop/issues"
+  },
+  "homepage": "https://github.com/stormouse/reigns-tabletop#readme"
+}
