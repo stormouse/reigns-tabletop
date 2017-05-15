@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Reigns The Tabletop</title>
+</head>
+
+
+<body>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<style>
+
+b, p, span, div {
+    font-size: 0.65em
+};
+
+</style>
+
+<div id="signDiv">
+    Username: <input id="signDiv-username" type="text"></input><br>
+    Password: <input id="signDiv-password" type="password"></input>
+    <button id="signDiv-signIn">Sign In</button>
+</div>
+
+<!-- canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas -->
+
+<div id="gameDiv">
+
+    <div class="container">
+        <div class="row">
+
+            <div class="col-lg-4 col-md-4">
+                <div class="row" style="height:80px;">
+                    <div class="row" id="table_seat_0">
+
+                    </div>
+                    <div class="row" id="table_item_0">
+                        <span>[人民 10][宗教 10][军队 10][经济 10]</span>
+                        <button class="set-target-btn" disabled="disabled">使用</button>
+                    </div>
+                </div>
+                
+                <hr>
+
+                <div class="row" style="height:80px;">
+                    <div class="row" id="table_seat_1">
+
+                    </div>
+                    <div class="row" id="table_item_1">
+                        <span>[人民 10][宗教 10][军队 10][经济 10]</span>
+                        <button class="set-target-btn" disabled="disabled">使用</button>
+                    </div>
+                </div>
+                
+                <hr>
+
+                <div class="row" style="height:80px;">
+                    <div class="row" id="table_seat_2">
+
+                    </div>
+                    <div class="row" id="table_item_2">
+                        <span>[人民 10][宗教 10][军队 10][经济 10]</span>
+                        <button class="set-target-btn" disabled="disabled">使用</button>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row" style="height:80px;">
+                    <div class="row" id="table_seat_3">
+
+                    </div>
+                    <div class="row" id="table_item_3">
+                        <span>[人民 10][宗教 10][军队 10][经济 10]</span>
+                        <button class="set-target-btn" disabled="disabled">使用</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8 col-md-8">
+                <div class="row" style="height:80%;">
+                    <div class="row" style="height:60%;">
+                        Contentless;
+                    </div>
+
+                    <div class="row" style="height:40%;" id="my-items">
+                        <div class="col-md-2" id="story-1">
+                            <b>饥荒</b><br>
+                            这是一张事件牌<br>
+                            <button class='use-story-card-btn'>使用</button>
+                        </div>
+                        <div class="col-md-2" id="story-2"></div>
+                        <div class="col-md-2" id="story-3"></div>
+                        <div class="col-md-2" id="story-4"></div>
+                        <div class="col-md-2" id="story-5"></div>
+                        <div class="col-md-2" id="action-1"></div>
+                        <div class="col-md-2" id="action-2"></div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div id="chat-text" class="container" style="width:100%; height: 20%; overflow-y:scroll">
+                </div>
+
+                <form id="chat-form">
+                    <input id="chat-input" type="text" style="width:100%;"></input>
+                </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+        
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.1/socket.io.js"></script>
+
+<script>
+
+    var socket = io();
+
+    /** sign part **/
+
+    var signDiv = document.getElementById('signDiv');
+    var signDivUsername = document.getElementById('signDiv-username');
+    var signDivSignIn = document.getElementById('signDiv-signIn');
+    var signDivPassword = document.getElementById('signDiv-password');
+
+    var gameDiv = document.getElementById('gameDiv');
+    gameDiv.style.display = 'none';
+
+
+    var myName = "";
+    var isReady = false;
+
+    signDivSignIn.onclick = function(){
+        myName = signDivUsername.value;
+        socket.emit('Login', {username:signDivUsername.value, paraphrase:signDivPassword.value});
+    };
+
+    socket.on('LoginResponse', function(data){
+        if(data.success){
+            signDiv.style.display = 'none';
+            gameDiv.style.display = 'inline-block';
+        } else {
+            alert(data.reason);
+        }
+    });
+
+
+    /** game part **/
+    var chatText = document.getElementById('chat-text');
+    var chatInput = document.getElementById('chat-input');
+    var chatForm = document.getElementById('chat-form');
+
+
+
+    socket.on('AddToChat', function(data){
+        chatText.innerHTML += '<div>' + data + '</div>';
+    });
+
+    
+    chatForm.onsubmit = function(e){
+        e.preventDefault();
+        socket.emit('sendMsgToServer', chatInput.value);  
+        chatInput.value = '';
+    };
+
+
+    socket.on('UpdateSeatInfo', function(data){
+        for(let i=0;i<4;i++){
+            if(data.names[i] == "<空闲>")
+                document.getElementById("table_seat_"+i).innerHTML = '<button onclick="takeSeat('+i+')">选择该座位</button>';
+            else{
+                if(data.names[i] != myName){
+                    document.getElementById("table_seat_"+i).innerHTML = 
+                    '<span>' + data.names[i] + '</span>' + 
+                    '<span style="color:#353;">' + data.ready[i] + '</span>';
+                }
+                else{
+                    if(!data.ready[i])
+                        document.getElementById("table_seat_"+i).innerHTML = '<span>' + data.names[i] + '</span>' + '<button id="ready-btn" onclick="ready();">准备</button>';
+                    else
+                        document.getElementById("table_seat_"+i).innerHTML = '<span>' + data.names[i] + '</span>' + '<span style="color:#353;">' + data.ready[i] + '</span>';                    
+                }
+            }
+        }
+    });
+
+    function takeSeat(seat){
+        socket.emit("Sit", {seat:seat});
+    }
+
+    function ready(){
+        socket.emit("Ready");
+    }
+
+    // var ctx = document.getElementById("ctx").getContext("2d");
+    // ctx.font = "30px Arial";
+
+    // socket.on('newPositions', function(data){
+    //     ctx.clearRect(0, 0, 500, 500);
+    //     for(let i = 0; i < data.length; i++)
+    //         ctx.fillText(data[i].number, data[i].x, data[i].y);
+    // });
+
+
+
+
+    /* Gameplay */
+
+    /* CONSTS OF STATE ENUM*/
+    const GameState = {
+        NotStarted : "NotStarted",
+        SetNewActivePlayer : "SetNewActionPlayer",
+        CallingForStoryCard : "CallingForStoryCard",
+        CallingForActionCard_1 : "CallingForActionCard_1",
+        CallingForActionCard_2 : "CallingForActionCard_2",
+        CallingForDecision : "CallingForDecision",
+        PerformAction : "PerformAction",
+        GameOver : "GameOver",
+    };
+
+
+    const GameEvent = {
+        // initialize
+        InitCardPile : "InitCardPile",
+
+        // gameplay
+        CallingForStoryCard : "CallingForStoryCard",
+        HandInStoryCard : "HandInStoryCard",
+        CallingForActionCard : "CallingForActionCard",
+        HandInActionCard : "HandInActionCard",
+        CallingForDecision : "CallingForDecision",
+        MakeDecision : "MakeDecision",
+
+
+        // state synchronization
+        SyncStoryCards : "SyncStoryCards",
+        SyncActionCards : "SyncActionCards",
+        UpdateGameInfo : "UpdateGameInfo",
+        AnnounceLoser : "AnnounceLoser",
+    }
+
+    var myStoryCards;
+    var myActionCards;
+
+    var storyCardOnTable;
+    var actionCardsOnTable;
+    var playerDecision;
+
+
+    socket.on(GameEvent.InitCardPile, function(data){
+        myStoryCards = data.storyCards;
+        myActionCards = data.actionCards;
+
+        for(let i=0;i<5;i++){
+            document.getElementById("story-"+i).innerHTML = '<b>' + myStoryCards[i].name + '</b><br>' + 
+            '<button class="use-story-card-btn">使用</button>';
+        }
+
+        for(let i=0;i<2;i++){
+            document.getElementById("action-"+i).innerHTML = '<b>' + myActionCards[i].name + '</b><br>' + 
+            '<button class="use-story-card-btn">使用</button>';
+        }
+    });
+
+    socket.on(GameEvent.CallingForStoryCard, function(data){
+        let buttons = document.getElementsByClassName("set-target-btn");
+        for(i in buttons){
+            buttons[i].removeAttribute("disabled");
+        }
+    });
+
+    socket.on(GameEvent.CallingForActionCard, function(){
+        let buttons = document.getElementByClassName("use-action-card-btn");
+        for(i in buttons){
+            buttons[i].style.display = "";
+        }
+    });
+
+    socket.on(GameEvent.CallingForDecision, function(){
+        
+    })
+
+    socket.on(GameEvent.SyncActionCards, function(data){
+
+    });
+    
+
+
+</script>
+
+
+</body>
+</html>

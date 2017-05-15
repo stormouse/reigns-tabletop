@@ -2,7 +2,7 @@
   "name": "reigns-tabletop",
   "version": "1.0.0",
   "description": "a tabletop game inspired by Reigns",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/stormouse/reigns-tabletop/issues"
   },
-  "homepage": "https://github.com/stormouse/reigns-tabletop#readme"
+  "homepage": "https://github.com/stormouse/reigns-tabletop#readme",
+  "dependencies": {
+    "uuid": "^3.0.1"
+  }
 }
