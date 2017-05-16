@@ -167,22 +167,30 @@ b, p, span, div {
     
     chatForm.onsubmit = function(e){
         e.preventDefault();
-        socket.emit('sendMsgToServer', chatInput.value);  
+        inputMessage(chatInput.value);
         chatInput.value = '';
     };
 
 
+    var mySeat = -1;
+    var playerNameOnSeat = ["","","",""];
+
     socket.on('UpdateSeatInfo', function(data){
         for(let i=0;i<4;i++){
-            if(data.names[i] == "<空闲>")
+            if(data.names[i] == "<空闲>"){
+                playerNameOnSeat[i] = "";
                 document.getElementById("table_seat_"+i).innerHTML = '<button onclick="takeSeat('+i+')">选择该座位</button>';
+            }
             else{
+                playerNameOnSeat[i] = data.names[i];
+
                 if(data.names[i] != myName){
                     document.getElementById("table_seat_"+i).innerHTML = 
                     '<span>' + data.names[i] + '</span>' + 
                     '<span style="color:#353;">' + data.ready[i] + '</span>';
                 }
                 else{
+                    mySeat = i;
                     if(!data.ready[i])
                         document.getElementById("table_seat_"+i).innerHTML = '<span>' + data.names[i] + '</span>' + '<button id="ready-btn" onclick="ready();">准备</button>';
                     else
@@ -247,6 +255,10 @@ b, p, span, div {
         AnnounceLoser : "AnnounceLoser",
     }
 
+
+    var gameState;
+    var playerProperties;
+
     var myStoryCards;
     var myActionCards;
 
@@ -256,19 +268,11 @@ b, p, span, div {
 
 
     socket.on(GameEvent.InitCardPile, function(data){
+        chatText.innerHTML = '<div>' + "游戏开始" + '</div>';
         myStoryCards = data.storyCards;
         myActionCards = data.actionCards;
-
-        for(let i=0;i<5;i++){
-            document.getElementById("story-"+i).innerHTML = '<b>' + myStoryCards[i].name + '</b><br>' + 
-            '<button class="use-story-card-btn">使用</button>';
-        }
-
-        for(let i=0;i<2;i++){
-            document.getElementById("action-"+i).innerHTML = '<b>' + myActionCards[i].name + '</b><br>' + 
-            '<button class="use-story-card-btn">使用</button>';
-        }
     });
+
 
     socket.on(GameEvent.CallingForStoryCard, function(data){
         let buttons = document.getElementsByClassName("set-target-btn");
@@ -277,6 +281,12 @@ b, p, span, div {
         }
     });
 
+    
+    var handInStoryCard = function(index, target){
+        socket.emit(GameEvent.HandInStoryCard, {cardIndex : index, target : target});
+    }
+
+
     socket.on(GameEvent.CallingForActionCard, function(){
         let buttons = document.getElementByClassName("use-action-card-btn");
         for(i in buttons){
@@ -284,15 +294,159 @@ b, p, span, div {
         }
     });
 
+    var handInActionCard = function(index){
+        socket.emit(GameEvent.HandInActionCard, {cardIndex : index});  
+    };
+
+
     socket.on(GameEvent.CallingForDecision, function(){
         
     })
 
+    var makeDecision = function(index){
+        socket.emit(GameEvent.MakeDecision, {decision : index});
+    }
+
     socket.on(GameEvent.SyncActionCards, function(data){
+        myActionCards = data;
+    });
+
+
+    socket.on(GameEvent.SyncStoryCards, function(data){
+        myStoryCards = data;
+    });
+
+
+    socket.on(GameEvent.UpdateGameInfo, function(data){
+
+        gameState = data.state;
+        playerProperties = data.properties;
+
+        var data_string = "";
+
+        if(data.currentDecision != null){
+            data_string += "玩家选择了" + data.currentActions[data.currentDecision];
+            chatText.innerHTML += '<div>' + data_string + '</div>';
+        }
+        else if(data.currentActions != null){
+            for(i in data.currentActions){
+                data_string += "选择"+i+": "+data.currentActions[i];
+                chatText.innerHTML += '<div>' + data_string + '</div>';
+            }
+        }
+        else if(data.currentStory != null){
+            data_string = "["+ playerNameOnSeat[data.whostargeted] +"]正在经历事件: " + data.currentStory.story;
+            chatText.innerHTML += '<div>' + data_string + '</div>';
+        }
+
+
+        switch(data.state){
+            case GameState.CallingForStoryCard: 
+                data_string += "轮到玩家[" + playerNameOnSeat[data.whosactive] + "]选取事件"; 
+                chatText.innerHTML += '<div>' + data_string + '</div>'; break;
+            case GameState.CallingForActionCard_1: 
+            case GameState.CallingForActionCard_2: 
+                data_string += "轮到玩家[" + playerNameOnSeat[data.whosactive] + "]选取动作"; 
+                chatText.innerHTML += '<div>' + data_string + '</div>'; break;
+            case GameState.CallingForDecision: 
+                data_string += "轮到玩家[" + playerNameOnSeat[data.whosactive] + "]做出抉择"; 
+                chatText.innerHTML += '<div>' + data_string + '</div>'; break;
+        }
+        
+
+        if(mySeat == data.whosactive){
+            switch(data.state){
+                case GameState.CallingForStoryCard: data_string = "请您选择一张事件牌（输入0~4）"; break;
+                case GameState.CallingForActionCard_1: 
+                case GameState.CallingForActionCard_2: data_string = "请您选择一张动作牌（输入0~1)"; break;
+                case GameState.CallingForDecision: data_string = "请您做出选择（输入0~1）"; break;
+            }
+            chatText.innerHTML += '<div>' + data_string + '</div>';
+        }
 
     });
     
 
+    socket.on(GameEvent.AnnounceLoser, function(data){
+        alert(data);
+        // location.reload();
+    });
+
+
+    function showPlayerStatus(){
+        for(let i=0;i<4;i++){
+            let data_string = "["+playerNameOnSeat[i]+"]: " + 
+            "A " + playerProperties[i].army + " - " +
+            "C " + playerProperties[i].church + " - " + 
+            "E " + playerProperties[i].eco + ' - ' +
+            "P " + playerProperties[i].people; 
+            chatText.innerHTML += '<div>' + data_string + '</div>';
+        }
+    }
+
+    function showMyStories(){
+        for(let i=0;i<5;i++){
+            let s = myStoryCards[i];
+            let sa = s.result["accept"], sr = s.result["reject"], si = s.result["ignore"];
+            let data_string = i+". "+s.name+": " +
+            "[ACC]" + sa["army"] + "," + sa["church"] + "," + sa["eco"] + "," + sa["people"] + " - " +
+            "[REJ]" + sr["army"] + "," + sr["church"] + "," + sr["eco"] + "," + sr["people"] + " - " +
+            "[IGN]" + si["army"] + "," + si["church"] + "," + si["eco"] + "," + si["people"];
+            chatText.innerHTML += '<div>' + data_string + '</div>';
+        }
+    }
+
+    function showMyActions(){
+        for(let i=0;i<2;i++){
+            let s = myActionCards[i];
+            let data_string = i+". "+s.action;
+            chatText.innerHTML += '<div>' + data_string + '</div>';
+        }
+    }
+
+
+    function inputMessage(msg){
+        var num_ptn = /^[0-4]$/;
+        var dir_ptn = /^[0-4]=>[0-3]$/;
+
+        if(dir_ptn.exec(msg)){
+            if(gameState == GameState.CallingForStoryCard){
+                var fields = msg.split("=>");
+                if(fields[1] != mySeat){
+                    handInStoryCard(parseInt(fields[0]), parseInt(fields[1]));
+                    return;
+                }
+            }
+        }
+
+        if(num_ptn.exec(msg)){
+            switch(gameState){
+                case GameState.CallingForActionCard_1: handInActionCard(parseInt(msg)); break;
+                case GameState.CallingForActionCard_2: handInActionCard(parseInt(msg)); break;
+                case GameState.CallingForDecision: makeDecision(parseInt(msg)); break;
+            }
+            return;
+        }
+
+        if(msg == "status"){
+            showPlayerStatus();
+        }
+        else if(msg == "mystories"){
+            showMyStories();
+        }
+        else if(msg == "myactions"){
+            showMyActions();
+        }
+        else if(msg[0] == '/'){
+            socket.emit('debugPrint', msg.slice(1));
+        }
+        else if(msg[0] == '$'){
+            chatText.innerHTML += '<div>' + eval(msg.slice(1)) + '</div>';
+        }
+        else{
+            socket.emit('sendMsgToServer', msg); 
+        }
+    }
 
 </script>
 

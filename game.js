@@ -9,7 +9,7 @@
             type : "story",
             name : prototype.name,
             story : prototype.story,
-            result : prototyle.result,
+            result : prototype.result,
         };
 
         return self;
@@ -72,6 +72,7 @@
             storyPile : [],         // card entities inside, not uid!
             storyDiscarded : [],    // also card entities, not uid.
 
+            actionTypes : [{name:"同意", action:"accept"}, {name:"拒绝", action:"reject"}, {name:"中立", action:"ignore"}],
             actionCards : {},
             actionPile : [],
             actionDiscarded : [],
@@ -133,16 +134,18 @@
         self.shuffle = function(arr){
             for(let i=arr.length-1; i>=0; i--){
                 let j = Math.floor(Math.random() * (i+1));
-                let t = actionPile[i]; actionPile[i] = actionPile[j]; actionPile[j] = t;
+                let t = self.actionPile[i]; 
+                self.actionPile[i] = self.actionPile[j]; 
+                self.actionPile[j] = t;
             }
         }
 
 
         self.BuildStoryPile = function(){
             for(let i = 0; i < 100; i++){
-                let storyPrototype = Math.floor(Math.random() * self.storyTypes.length);
+                let storyPrototype = self.storyTypes[Math.floor(Math.random() * self.storyTypes.length)];
                 let uid = uuid();
-                let storyCard = new StoryCard(uid, storyPrototype);
+                let storyCard = StoryCard(uid, storyPrototype);
                 self.storyCards[uid] = storyCard;
                 self.storyPile.push(storyCard);
             }
@@ -151,11 +154,11 @@
 
 
         self.BuildActionPile = function(){
-            let n = 18;
+            let n = 15;
             for(let i = 0; i < n; i++){
-                let actionPrototype = i % self.actionTypes.length;
+                let actionPrototype = self.actionTypes[i % self.actionTypes.length];
                 let uid = uuid();
-                let actionCard = new ActionCard(uid, actionPrototype);
+                let actionCard = ActionCard(uid, actionPrototype);
                 self.actionPile.push(actionCard);
             }
 
@@ -183,8 +186,6 @@
         }
 
 
-
-
         /* Never let clients know the uid of the card, 
            or they will cheat by modifying the game with browser */
         self.DesensitizeStoryCard = function(storyCard){
@@ -197,7 +198,7 @@
 
         self.DesensitizeActionCard = function(actionCard){
             return {
-                name : storyCard.name,
+                name : actionCard.name,
                 action : actionCard.action,
             };
         }
@@ -207,21 +208,23 @@
         /* Deal the cards */
         self.DealTheCards = function(){
             for(let i = 0; i < 4; i++){
+                self.players[self.table[i]].storyCards = [];
                 var clientStoryCards = [];
                 for(let j = 0; j < 5; j++){
-                    let c = NextStoryCard();
-                    players[table[i]].storyCards.push(c);
+                    let c = self.NextStoryCard();
+                    self.players[self.table[i]].storyCards.push(c);
                     clientStoryCards.push(self.DesensitizeStoryCard(c));
                 }
 
+                self.players[self.table[i]].actionCards = [];
                 var clientActionCards = [];
                 for(let j = 0; j < 2; j++){
-                    let c = NextActionCard();
-                    players[table[i]].actionCards.push(c);
-                    clientActionCards.push(self.DesensitizeActionCard(c));    
+                    let c = self.NextActionCard();
+                    self.players[self.table[i]].actionCards.push(c);
+                    clientActionCards.push(self.DesensitizeActionCard(c));
                 }
 
-                players[table[i]].socket.emit(GameEvent.InitCardPile, {
+                self.players[self.table[i]].socket.emit(GameEvent.InitCardPile, {
                     storyCards : clientStoryCards,
                     actionCards : clientActionCards,
                 });
@@ -254,7 +257,7 @@
 
                 case GameState.CallingForStoryCard:
                 {
-                    let player = self.players[table[whosturn]];
+                    let player = self.players[self.table[self.whosturn]];
                     player.socket.emit(GameEvent.CallingForStoryCard);
                     player.socket.on(GameEvent.HandInStoryCard, self.Transitor);
                     self.Broadcast(GameEvent.UpdateGameInfo, self.PackInfo());
@@ -265,7 +268,7 @@
 
                 case GameState.CallingForActionCard_1:
                 {
-                    let player = self.players[table[whosactive]];
+                    let player = self.players[self.table[self.whosactive]];
                     player.socket.emit(GameEvent.CallingForActionCard);
                     player.socket.on(GameEvent.HandInActionCard, self.Transitor);
                     self.Broadcast(GameEvent.UpdateGameInfo, self.PackInfo());
@@ -276,7 +279,7 @@
 
                 case GameState.CallingForActionCard_2:
                 {
-                    let player = self.players[table[whosactive]];
+                    let player = self.players[self.table[self.whosactive]];
                     player.socket.emit(GameEvent.CallingForActionCard);
                     player.socket.on(GameEvent.HandInActionCard, self.Transitor);
                     self.Broadcast(GameEvent.UpdateGameInfo, self.PackInfo());
@@ -287,7 +290,7 @@
 
                 case GameState.CallingForDecision:
                 {
-                    let player = self.players[table[whosactive]];
+                    let player = self.players[self.table[self.whosactive]];
                     player.socket.emit(GameEvent.CallingForDecision);
                     player.socket.on(GameEvent.MakeDecision, self.Transitor);
                     self.Broadcast(GameEvent.UpdateGameInfo, self.PackInfo());
@@ -297,8 +300,8 @@
 
                 case GameState.PerformAction:
                 {
-                    let player = self.players[table[whostargeted]];
-                    let action = self.currentActions[self.decision].action;
+                    let player = self.players[self.table[self.whostargeted]];
+                    let action = self.currentActions[self.currentDecision].action;
                     let value = self.currentStory.result[action];
                     player.property.army += value.army;
                     player.property.church += value.church;
@@ -339,26 +342,27 @@
                 {
                     // security check
                     if(data.cardIndex >= 5) {self.EnterState(self.state); break;}
+                    if(data.target == self.whosturn) {self.EnterState(self.state); break;}
 
-                    let player = self.players[table[whosturn]];
+                    let player = self.players[self.table[self.whosturn]];
                     let card = player.storyCards[data.cardIndex];
                     player.storyCards.splice(data.cardIndex, 1);
                     player.storyCards.push(self.NextStoryCard());
 
                     let clientStoryCards = [];
-                    for(i in player.StoryCards) 
+                    for(i in player.storyCards) 
                         clientStoryCards.push(self.DesensitizeStoryCard(player.storyCards[i]));          
                     player.socket.emit(GameEvent.SyncStoryCards, clientStoryCards);
 
                     self.currentStory = card;
                     self.storyDiscarded.push(card);
                     self.whostargeted = data.target;
-                    for(i in table){
+                    for(i in self.table){
                         if(i != self.whosturn && i != self.whostargeted)
                             self.whosleft.push(i);
                     }
                     
-                    player.socket.removeEventListener(GameEvent.HandInStoryCard, self.Transitor);
+                    player.socket.removeListener(GameEvent.HandInStoryCard, self.Transitor);
                     
                     self.whosactive = self.whosleft[0];
                     self.EnterState(GameState.CallingForActionCard_1);
@@ -371,7 +375,7 @@
                     // security check
                     if(data.cardIndex >= 2) {self.EnterState(self.state); break;}
                     
-                    let player = self.players[table[whosactive]];
+                    let player = self.players[self.table[self.whosactive]];
                     let card = player.actionCards[data.cardIndex];
                     player.actionCards.splice(data.cardIndex, 1);
                     player.actionCards.push(self.NextActionCard());
@@ -383,7 +387,7 @@
 
                     self.currentActions.push(card);
                     self.actionDiscarded.push(card);
-                    player.socket.removeEventListener(GameEvent.HandInActionCard, self.Transitor);
+                    player.socket.removeListener(GameEvent.HandInActionCard, self.Transitor);
 
                     self.whosactive = self.whosleft[1];
                     self.EnterState(GameState.CallingForActionCard_2);
@@ -396,7 +400,7 @@
                     // security check
                     if(data.cardIndex >= 2) {self.EnterState(self.state); break;}
 
-                    let player = self.players[table[whosactive]];
+                    let player = self.players[self.table[self.whosactive]];
                     let card = player.actionCards[data.cardIndex];
                     player.actionCards.splice(data.cardIndex, 1);
                     player.actionCards.push(self.NextActionCard());
@@ -408,7 +412,7 @@
 
                     self.currentActions.push(card);
                     self.actionDiscarded.push(card);
-                    player.socket.removeEventListener(GameEvent.HandInActionCard, self.Transitor);
+                    player.socket.removeListener(GameEvent.HandInActionCard, self.Transitor);
 
                     self.whosactive = self.whostargeted;
                     self.EnterState(GameState.CallingForDecision);
@@ -420,7 +424,10 @@
                     // security check
                     if(data.cardIndex >= 2) {self.EnterState(self.state); break;}
 
+                    let player = self.players[self.table[self.whosactive]];
+
                     self.currentDecision = data.decision;
+                    player.socket.removeListener(GameEvent.MakeDecision, self.Transitor);
                     self.EnterState(GameState.PerformAction);
                 }
                 break;
@@ -434,7 +441,8 @@
         }
 
 
-        self.StartGame = function(){
+        self.StartGame = function(end_game_callback){
+            self.EndGameCallback = end_game_callback;
             self.BuildActionPile();
             self.BuildStoryPile();
             self.DealTheCards();
@@ -445,12 +453,8 @@
             switch(args.reason){
                 case "kingdomfall":
                 {
-                    for(i in table){
-                        if(table[i] == args.loser.id){
-                            Broadcast(GameEvent.AnnounceLoser, {loser : args.loser});
-                            break;
-                        }
-                    };
+                    self.Broadcast(GameEvent.AnnounceLoser, args.loser.name+"的王国已经倾覆");
+                    self.EndGameCallback();
                 }
                 break;
             }
@@ -459,8 +463,6 @@
 
         return self;
     }
-
-
 
 
     module.exports.Game = function(players, table, story_types){

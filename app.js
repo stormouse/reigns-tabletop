@@ -17,15 +17,53 @@ console.log('Server started.')
 var io = require('socket.io')(serv);
 
 /* --- load story cards from db --- */
-// var ALL_STORY_CARDS = [];
-// const sqlite = require('sqlite3');
-// let db = new sqlite.Database('./database.db');
-// db.serialize(()=>{
-//     db.each("select * from storycards", (err, row) => {
-//         ALL_STORY_CARDS.push(row);
-//     });
-// });
-// db.close();
+var ALL_STORY_TYPES = [];
+var ALL_ACTION_TYPES = [];
+
+
+const sqlite = require('sqlite3');
+let db = new sqlite.Database('./database.db');
+
+
+function LoadStoryCards(){
+    db.all("select * from storycards", (err, rows) => {
+        OnStoryRowsLoaded(err, rows);
+    });
+}
+
+
+function LoadActionCards(){
+    db.all("select * from actioncards", (err, rows) => {
+        OnActionRowsLoaded(err, rows);
+    });
+}
+
+function OnStoryRowsLoaded(err, rows){
+    for(i in rows){
+        let data = {
+            name : rows[i].name,
+            story : rows[i].story,
+            result : JSON.parse(rows[i].result),
+        };
+
+        ALL_STORY_TYPES.push(data);
+    }
+
+    LoadActionCards();
+}
+
+function OnActionRowsLoaded(err, rows){
+    for(i in rows){
+        let data = {
+            name : rows[i].name,
+            action : rows[i].action,
+        };
+
+        ALL_ACTION_TYPES.push(data);
+    }
+
+    StartRoom();
+}
 
 
 /* --- import game module --- */
@@ -99,8 +137,21 @@ var Room = function(){
         self.Broadcast("UpdateSeatInfo", {names:playerNames, ready:playerReady});
     };
 
+    self.ResetRoom = function(){
+        self.table = [-1, -1, -1, -1];
+        self.ready = [false, false, false, false];
+        self.BroadcastSeatInfo();
+    }
+
 
     io.on('connection', function(socket){
+
+        /* DEBUG PRINT */
+
+        socket.on('debugPrint', function(msg){
+            socket.emit('AddToChat', eval(msg));
+        });
+
         socket.on("Login", function(data){
             if(Object.keys(User.list) == 4){
                 socket.emit("LoginResponse", {reason : "房间已满"});
@@ -173,13 +224,13 @@ var Room = function(){
                 if(all_ready){
                     var players = {};
                     for(id in User.list){
-                        let p = {
-                            id : id,
-                            socket : User.list[id].socket,
-                        };
-                        players[id] = p;
+                        players[id] = Player(id, User.list[id].socket);
                     }
-                    self.game = GameMod.Game(players, self.table, self.LoadStoryTypes);
+                    self.game = GameMod.Game(players, self.table, ALL_STORY_TYPES);
+                    self.game.StartGame(function(){
+                        self.ResetRoom();
+                        self.game = null;
+                    });
                 }
             });
         });
@@ -189,4 +240,11 @@ var Room = function(){
     return self;
 };
 
-var room = Room();
+
+function StartRoom(){
+    var room = Room();
+}
+
+
+// load story & load action & start room
+LoadStoryCards();
