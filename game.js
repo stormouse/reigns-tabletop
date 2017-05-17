@@ -454,10 +454,11 @@
                 case "kingdomfall":
                 {
                     self.Broadcast(GameEvent.AnnounceLoser, args.loser.name+"的王国已经倾覆");
-                    self.EndGameCallback();
                 }
                 break;
             }
+
+            self.EndGameCallback();
         }
 
 
