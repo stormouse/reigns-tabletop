@@ -7,7 +7,36 @@
 </head>
 <script src="js/pixi.min.js"></script>
 
-<body>
+<body onresize="screenResize();">
+    <style>
+    .text-layer {
+        position: absolute;
+        z-index: 0;
+    }
+
+    canvas {
+        position: absolute;
+        z-index: -1;
+    }
+
+    textarea {  
+        border:0;  
+        background-color:transparent;  
+        /*scrollbar-arrow-color:yellow;  
+        scrollbar-base-color:lightsalmon;  
+        overflow: hidden;*/
+        height: auto;  
+    }
+
+    </style>
+
+
+    <div class="text-layer">
+        <textarea width="170" rows="7" wrap="soft" readonly="true" style="position: absolute; left: 685px; top: 300px; resize: none; font-size: 16px; font-family: Arial, Helvetica, sans-serif">陛下，今年收成不好，国内出现了饥荒，人民需要你的英明决定！</textarea>
+        <textarea width="170" rows="2" wrap="soft" readonly="true" style="position: absolute; left: 685px; top: 470px; resize: none; font-size: 16px; text-align: center; font-family: Arial, Helvetica, sans-serif">Leax 致 Shawnc</textarea>
+    </div>
+
+
     <style>* {padding: 0; margin: 0}</style>
     <script type="text/javascript">
         var type = "WebGL";
@@ -18,7 +47,7 @@
     
         
 
-        var renderer = PIXI.autoDetectRenderer(256, 256);
+        var renderer = PIXI.autoDetectRenderer(256, 256, {antialias: false, transparent: false, resolution: 1});
         renderer.view.style.border = "1px black";
         renderer.backgroundColor = 0x061639;
         renderer.view.style.position = "absolute";
@@ -26,16 +55,124 @@
         renderer.autoResize = true;
         renderer.resize(window.innerWidth, window.innerHeight);
 
+        console.log(window.innerWidth + ", " + window.innerHeight);
 
         document.body.appendChild(renderer.view);
 
         var stage = new PIXI.Container();
-        
-        renderer.render(stage);
+    
 
-    
-    
-    
+        PIXI.loader
+            .add("img/cardback.png")
+            .add("img/icons.png")
+            .add("img/border.png")
+            .add("img/storycardback.png")
+            .load(setup);
+
+        var mySeat = 2;
+        var mouseOnSeat;
+        var dirty = false;
+
+        var cardbacks = [null, null, null, null];
+        var border_sprite = null;
+
+        const cardsizex = 240, cardsizey = 160;
+        const storycardsizex = 200, storycardsizey = 300;
+        const bordersizex = 100, bordersizey = 10;
+        const icon_offsetx = 0, icon_offsety = 0;
+        
+        var story_cardback_sprite = null;
+
+        function setup(){
+            
+            var cardbacks = [null, null, null, null];
+            var cardposx = [(renderer.width - cardsizex)/2, bordersizex, (renderer.width - cardsizex)/2, renderer.width - bordersizex - cardsizex];
+            var cardposy = [renderer.height - bordersizey - cardsizey, (renderer.height - cardsizey)/2, bordersizey, (renderer.height - cardsizey)/2];
+
+            for(let i = 0; i < 4; i++){
+                
+                let index = (i + 4 - mySeat) % 4;
+
+                cardbacks[index] = new PIXI.Sprite(
+                    PIXI.loader.resources["img/cardback.png"].texture
+                );
+
+                cardbacks[index].width = cardsizex;
+                cardbacks[index].height = cardsizey;
+                cardbacks[index].x = cardposx[i];
+                cardbacks[index].y = cardposy[i];
+                cardbacks[index].interactive = true;
+                cardbacks[index].mouseover = function(e){
+                    if(e.currentTarget.index != mouseOnSeat){
+                        if(mouseOnSeat != null) cardbacks[mouseOnSeat].removeChild(border_sprite);
+                        mouseOnSeat = e.currentTarget.index;
+                        cardbacks[mouseOnSeat].addChild(border_sprite);
+
+                        dirty = true;
+                        renderStage();
+                    }
+                    e.stopPropagation();
+                }
+                cardbacks[index].index = index;
+
+
+                let icon = new PIXI.Sprite(PIXI.loader.resources["img/icons.png"].texture);
+                icon.x = icon_offsetx; icon.y = icon_offsety;
+                cardbacks[index].addChild(icon);
+
+                for(let j = 0; j < 4; j++){
+                    let value_text = new PIXI.Text(10, {font: '15px Arial', fill: 0x000000});
+                    value_text.x = 95 + j * 56;
+                    value_text.y = 116;
+                    cardbacks[index].addChild(value_text);
+                }
+
+
+                let label = new PIXI.Text(cardbacks[index].index, {font: '15px Arial', fill: 0xFFFFFF});
+                label.x = cardposx[i];
+                label.y = cardposy[i];
+                stage.addChild(cardbacks[index]);
+                stage.addChild(label);
+
+
+                border_sprite = new PIXI.Sprite(PIXI.loader.resources["img/border.png"].texture);
+                story_cardback_sprite = new PIXI.Sprite(PIXI.loader.resources["img/storycardback.png"].texture);
+
+                story_cardback_sprite.x = (renderer.width - storycardsizex) / 2;
+                story_cardback_sprite.y = (renderer.height - storycardsizey) / 2;
+
+                let name_label = new PIXI.Text("饥荒", {font: '25px 隶书', fill: 0x332300});
+                name_label.x = 15;
+                name_label.y = 15;
+
+                story_cardback_sprite.addChild(name_label);
+
+                stage.addChild(story_cardback_sprite);
+            }
+            
+            renderer.render(stage);
+        }
+
+
+        function renderStage(){
+            if(!dirty) return;
+            renderer.resize(window.innerWidth, window.innerHeight);
+            renderer.render(stage);
+            dirty = false;
+        }
+        
+
+        function screenResize(){
+            if(stage != null){
+                renderer.resize(window.innerWidth, window.innerHeight);
+                renderer.render(stage);
+            }
+        }
+        
+
+        
+
+
     </script>
 
 

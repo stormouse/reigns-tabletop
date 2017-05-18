@@ -225,6 +225,7 @@ var Room = function(){
                     var players = {};
                     for(id in User.list){
                         players[id] = Player(id, User.list[id].socket);
+                        players[id].socket.emit("StartGame");
                     }
                     self.game = GameMod.Game(players, self.table, ALL_STORY_TYPES);
                     self.game.StartGame(function(){
