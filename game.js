@@ -251,6 +251,7 @@
                     self.currentDecision = null;
 
                     self.Transitor();
+                    
                 }
                 break;
 

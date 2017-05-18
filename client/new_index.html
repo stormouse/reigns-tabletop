@@ -869,10 +869,6 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
     if(lastActivePanelSprite != null)
         lastActivePanelSprite.removeChild(activePanelBorderSprite);
     
-    var ind = (data.whosactive + 4 - mySeat) % 4;
-    playerPanelSprites[ind].addChild(activePanelBorderSprite);
-    lastActivePanelSprite = playerPanelSprites[ind];
-
 
     switch(data.state){
         case GameState.CallingForStoryCard:
@@ -883,8 +879,10 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
             actionCardsOnTable = data.currentActions;
             storyCardOnTable = data.currentStory;
 
-            renderStage();
             storyCardOnTableOwner = data.whosactive;
+
+            let ind = (storyCardOnTableOwner + 4 - mySeat) % 4;
+            playerPanelSprites[ind].addChild(activePanelBorderSprite);
         }
         break;
 
@@ -895,8 +893,18 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
             showStoryCardOnTable();
             updateMyActionCardUI(); // 显示手上的动作卡对当前事件的影响，方便玩家决策
 
-            
             actionCardOnTableOwners[0] = data.whosactive;
+
+            let i1=-1, i2;
+            for(let i=0;i<4;i++){
+                if(i != storyCardOnTableTarget && i != storyCardOnTableOwner){
+                    if(i1 == -1) i1 = i;
+                    else i2 = i;
+                }
+            }
+
+            let ind = ((i1 < i2 ? i1 : i2) + 4 - mySeat) % 4;
+            playerPanelSprites[ind].addChild(activePanelBorderSprite);
         }
         break;
 
@@ -905,6 +913,16 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
             actionCardsOnTable = data.currentActions;
             showActionCardOnTable();
             actionCardOnTableOwners[1] = data.whosactive;
+
+            let i1=-1, i2;
+            for(let i=0;i<4;i++){
+                if(i != storyCardOnTableTarget && i != storyCardOnTableOwner){
+                    if(i1 == -1) i1 = i;
+                    else i2 = i;
+                }
+            }
+            let ind = ((i1 > i2 ? i1 : i2) + 4 - mySeat) % 4;
+            playerPanelSprites[ind].addChild(activePanelBorderSprite);
         }
         break;
 
@@ -912,6 +930,9 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
         {
             actionCardsOnTable = data.currentActions;
             showActionCardOnTable();
+
+            let ind = (storyCardOnTableTarget + 4 - mySeat) % 4;
+            playerPanelSprites[ind].addChild(activePanelBorderSprite);
         }
         break;
 
