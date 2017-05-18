@@ -422,10 +422,10 @@
                 case GameState.CallingForDecision:
                 {
                     // security check
-                    if(data.cardIndex >= 2) {self.EnterState(self.state); break;}
+                    if(data.decision >= 2) {self.EnterState(self.state); break;}
 
                     let player = self.players[self.table[self.whosactive]];
-
+                    
                     self.currentDecision = data.decision;
                     player.socket.removeListener(GameEvent.MakeDecision, self.Transitor);
                     self.EnterState(GameState.PerformAction);

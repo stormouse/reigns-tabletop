@@ -1,6 +1,7 @@
 
 <div id="signDiv">
-    玩家昵称: <input id="signDiv-username" type="text"/><br>
+    昵称: <input id="signDiv-username" type="text"/><br>
+    队密: <input id="signDiv-password" type="password"/><br>
     <button id="signDiv-signIn">进入测试房间</button>
 </div>
 
@@ -11,12 +12,15 @@
             <div class="col-lg-3" id="table_seat_0">
                 
             </div>
+            <hr>
             <div class="col-lg-3" id="table_seat_1">
 
             </div>
+            <hr>
             <div class="col-lg-3" id="table_seat_2">
 
             </div>
+            <hr>
             <div class="col-lg-3" id="table_seat_3">
 
             </div>
@@ -25,26 +29,32 @@
 </div>
 
 
-<div id="gameDiv">
+<div id="gameDiv" style="margin: 0; border: 0; position: absolute;">
     <style>
     #text-overlay {
         position: absolute;
-        z-index: 0;
+        z-index: 3;
+        pointer-events: none;
     }
 
-    #text-overlay * {
+    #text-overlay div {
         position: absolute;
+        font-size: 12px;
+        pointer-events: none;
     }
 
     #text-overlay textarea {
+        position: absolute;
+        resize: none;
         border: 0;
         background-color: transparent;
         height: auto;
+        pointer-events: none;
     }
 
     canvas {
         position: absolute;
-        z-index: -1;
+        z-index: 1;
     }
     </style>
 
@@ -62,24 +72,42 @@
 
 <script>
 
-// var socket = io();
-var socket = {};
-socket.on = function(a, b){}
-
+var socket = io();
 
 /* Login part */
 
+
+
 var signDiv = document.getElementById('signDiv');
 var signDivUsername = document.getElementById('signDiv-username');
+var signDivPassword = document.getElementById('signDiv-password');
 var signDivSignIn = document.getElementById('signDiv-signIn');
-
-signDiv.style.display = "none";
 
 var lobbyDiv = document.getElementById('lobbyDiv');
 lobbyDiv.style.display = "none";
 
 var gameDiv = document.getElementById('gameDiv');
-// gameDiv.style.display = 'none';
+gameDiv.style.display = 'none';
+
+var myName = "";
+var mySeat = -1;
+var playerNameOnSeat = ["", "", "", ""];
+
+
+signDivSignIn.onclick = function(){
+    myName = signDivUsername.value;
+    socket.emit('Login', {username:signDivUsername.value, paraphrase:signDivPassword.value});
+};
+
+
+socket.on('LoginResponse', function(data){
+    if(data.success){
+        signDiv.style.display = 'none';
+        lobbyDiv.style.display = 'inline-block';
+    } else {
+        alert(data.reason);
+    }
+});
 
 
 socket.on('UpdateSeatInfo', function(data){
@@ -94,24 +122,27 @@ socket.on('UpdateSeatInfo', function(data){
             if(data.names[i] != myName){
                 document.getElementById("table_seat_"+i).innerHTML = 
                 '<span>' + data.names[i] + '</span>' + 
-                '<span style="color:#353;">' + data.ready[i] + '</span>';
+                '<span style="color:#303;">' + data.ready[i] + '</span>';
             }
             else{
                 mySeat = i;
                 if(!data.ready[i])
                     document.getElementById("table_seat_"+i).innerHTML = '<span>' + data.names[i] + '</span>' + '<button id="ready-btn" onclick="ready();">准备</button>';
                 else
-                    document.getElementById("table_seat_"+i).innerHTML = '<span>' + data.names[i] + '</span>' + '<span style="color:#353;">' + data.ready[i] + '</span>';                    
+                    document.getElementById("table_seat_"+i).innerHTML = '<span>' + data.names[i] + '</span>' + '<span style="color:#303;">' + data.ready[i] + '</span>';                    
             }
         }
     }
 });
 
 
-socket.on('StartGame', function(data){
-    lobbyDiv.style.display = "none";
-    gameDiv.style.display = "";
-});
+function takeSeat(seat){
+    socket.emit("Sit", {seat:seat});
+}
+
+function ready(){
+    socket.emit("Ready");
+}
 
 
 
@@ -149,16 +180,13 @@ const GameEvent = {
 
 /* Gameplay Variables */
 
-var myName = "";
-var mySeat = -1;
-var playerNameOnSeat = ["", "", "", ""];
-
 var gameState;  // 游戏状态
 var playerProperties;   // 四名玩家的数值
 var myStoryCards;   // 本玩家拥有的事件卡（5张）
 var myActionCards;  // 本玩家拥有的动作卡（2张）
 var storyCardOnTable;   // 当前回合打出的事件卡
 var storyCardOnTableOwner;  // 当前回合打出事件卡的玩家
+var storyCardOnTableTarget; // 当前回合承受事件的玩家
 var actionCardsOnTable;  // 当前回合打出的动作卡
 var actionCardOnTableOwners = [null, null]; // 当前回合打出动作卡的玩家
 var playerDecision; // 当前回合玩家做出的选择
@@ -168,6 +196,8 @@ var textOverlayElement = document.getElementById("text-overlay");
 
 var playerPanelSprites = [null, null, null, null];  // 玩家信息卡Sprite
 var playerPropertyTextSprites = [null, null, null, null];   // 玩家数值UI的Sprites
+var playerSeatLabels = [null, null, null, null];
+var playerNameLabels = [null, null, null, null];
 var myStoryCardSprites = [];    // 本玩家的故事卡槽
 var myStoryCardTitleElements = [];  // 本玩家的故事卡名称在text-overlay层对应的文本元素
 var myStoryCardResultElements = []; // 本玩家的故事卡引起的数值变化显示在text-overlay层对应的文本元素
@@ -197,9 +227,11 @@ var lastSelectPanelSprite = null;
 var lastActivePanelSprite = null;
 
 
+
+
 /* Graphics */
 
-const standardScreenWidth = 1535;
+const standardScreenWidth = 1530;
 const standardScreenHeight = 758;
 const standardCardWidth = 240;
 const standardCardHeight = 180;
@@ -208,16 +240,13 @@ const originalCardHeight = 200;
 
 
 
-var textOverlay = document.createElement("div");
-textOverlay.setAttribute("class", "text-overlay");
 
+var type = "canvas";
+// if(!PIXI.utils.isWebGLSupported()){
+//     type = "canvas";
+// }
 
-var type = "WebGL";
-if(!PIXI.utils.isWebGLSupported()){
-    type = "canvas";
-}
-
-var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
+var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerWidth/2);
 renderer.view.style.border = "1px black";
 renderer.backgroundColor = 0x061639;
 renderer.view.style.position = "absolute";
@@ -238,30 +267,41 @@ PIXI.loader
 
 
 setupTextOverlay();
+adjustTextOverlayPositioning();
 
 
 function clearStage(){
+    textOverlayElement.style.display = "none";
     gameDiv.style.display = "none";
     lobbyDiv.style.display = "";
 }
 
 function renderStage(){
-    renderer.render(stage);
+    // renderer.render(stage);
 }
+
+
+update();
+
+function update(){
+    requestAnimationFrame(update);
+    renderer.render(stage);
+};
 
 function updatePlayerPropertyUI(){
     for(let i = 0; i < 4; i++){
-        playerPropertyTextSprites[i][0].text = playerProperties[i].army;
-        playerPropertyTextSprites[i][1].text = playerProperties[i].church;
-        playerPropertyTextSprites[i][2].text = playerProperties[i].eco;
-        playerPropertyTextSprites[i][3].text = playerProperties[i].people;
+        let index = (i + 4 - mySeat) % 4;
+        playerPropertyTextSprites[index][0].text = playerProperties[i].army;
+        playerPropertyTextSprites[index][1].text = playerProperties[i].church;
+        playerPropertyTextSprites[index][2].text = playerProperties[i].eco;
+        playerPropertyTextSprites[index][3].text = playerProperties[i].people;
     }
     renderStage();
 }
 
 function getColored(v){
     if(v < 0){
-        return '<span style="color: #0F0;">'+ v +'</span>';
+        return '<span style="color: #0F0;">'+ (-v) +'</span>';
     }
     if(v > 0){
         return '<span style="color: #F00;">'+ v +'</span>';
@@ -273,12 +313,12 @@ function updateMyStoryCardUI(){
     for(let i = 0; i < 5; i++){
         myStoryCardTitleElements[i].innerText = myStoryCards[i].name;
         let txt = "";
-        let values = myStoryCard[i].result["accept"];
-        txt += "同意-" + getColored(values["army"]) + " " + getColored(values["church"]) + " " + getColored(values["eco"]) + " " + getColored(values["people"]) + "<br>";
-        values = myStoryCard[i].result["reject"];
-        txt += "拒绝-" + getColored(values["army"]) + " " + getColored(values["church"]) + " " + getColored(values["eco"]) + " " + getColored(values["people"]) + "<br>";
-        values = myStoryCard[i].result["ignore"];
-        txt += "中立-" + getColored(values["army"]) + " " + getColored(values["church"]) + " " + getColored(values["eco"]) + " " + getColored(values["people"]) + "<br>";
+        let values = myStoryCards[i].result["accept"];
+        txt += "Y" + getColored(values["army"]) + getColored(values["church"]) + getColored(values["eco"]) + getColored(values["people"]) + "<br>";
+        values = myStoryCards[i].result["reject"];
+        txt += "N" + getColored(values["army"]) + getColored(values["church"]) + getColored(values["eco"]) + getColored(values["people"]) + "<br>";
+        values = myStoryCards[i].result["ignore"];
+        txt += "/" + getColored(values["army"]) + getColored(values["church"]) + getColored(values["eco"]) + getColored(values["people"]) + "<br>";
         myStoryCardResultElements[i].innerHTML = txt;
     }
 }
@@ -290,8 +330,8 @@ function updateMyActionCardUI(){
         if(storyCardOnTable == null)
             myActionCardResultElements[i].innerHTML = "";
         else{
-            let values = storyCardOnTable.result[myActionCard[i].action];
-            myActionCardResultElements[i].innerHTML = getColored(values["army"]) + " " + getColored(values["church"]) + " " + getColored(values["eco"]) + " " + getColored(values["people"]);
+            let values = storyCardOnTable.result[myActionCards[i].action];
+            myActionCardResultElements[i].innerHTML = getColored(values["army"]) + getColored(values["church"]) + getColored(values["eco"]) + getColored(values["people"]);
         }
     }
 }
@@ -303,7 +343,7 @@ function showStoryCardOnTable(){
     storyCardOnTableTitleElement.style.display = "";
     storyCardOnTableStoryElement.innerText = storyCardOnTable.story;
     storyCardOnTableStoryElement.style.display = "";
-    storyCardOnTableOwnerElement.innerText = "from " + playerNameOnSeat[storyCardOnTableOwner];
+    storyCardOnTableOwnerElement.innerText = playerNameOnSeat[storyCardOnTableOwner] + " 发给 " + playerNameOnSeat[storyCardOnTableTarget];
     storyCardOnTableOwnerElement.style.display = "";
     renderStage();
 }
@@ -323,9 +363,14 @@ function showActionCardOnTable(){
         if(actionCardsOnTable[i] == null) continue;
         if(actionCardOnTableShown[i]) continue;
 
+        actionCardOnTableSprites[i].index = i;
         stage.addChild(actionCardOnTableSprites[i]);
-        actionCardOnTableActionElements[i].innerText = actionCardsOnTable[i].name;
-        let values = storyCardOnTable.result[actionCardsOnTable[i].action];
+        if(actionCardsOnTable[i] == "accept") actionCardOnTableActionElements[i].innerText = "同意"; 
+        if(actionCardsOnTable[i] == "reject") actionCardOnTableActionElements[i].innerText = "拒绝";
+        if(actionCardsOnTable[i] == "ignore") actionCardOnTableActionElements[i].innerText = "中立";
+        actionCardOnTableActionElements[i].style.display = "";
+
+        let values = storyCardOnTable.result[actionCardsOnTable[i]];
         actionCardOnTableResultElements[i].innerHTML = 
             getColored(values["army"]) + " " + getColored(values["church"]) + " " + getColored(values["eco"]) + " " + getColored(values["people"]);
         actionCardOnTableResultElements[i].style.display = "";
@@ -345,6 +390,7 @@ function hideActionCardsOnTable(){
         actionCardOnTableResultElements[i].style.display = "none";
         actionCardOnTableOwnerElements[i].style.display = "none";
         actionCardOnTableShown[i] = false;
+        actionCardsOnTable = [null, null];
     }
     renderStage();
 }
@@ -357,45 +403,53 @@ function setupUI(){
 
     var cardsizex = window.innerWidth / standardScreenWidth * standardCardWidth;
     var cardsizey = cardsizex * standardCardHeight / standardCardWidth;
-    var bordersizex = 0.025 * 2.5 * window.innerWidth, bordersizey = 0.05 * 0.5 * window.innerHeight;
+    var bordersizex = 0.025 * 2.5 * window.innerWidth, bordersizey = 0.5 * 0.025 * window.innerWidth;
     var panel_pos_x = [(renderer.width - cardsizex)/2, bordersizex, (renderer.width - cardsizex)/2, renderer.width - bordersizex - cardsizex];
     var panel_pos_y = [renderer.height - bordersizey - cardsizey, (renderer.height - cardsizey)/2, bordersizey, (renderer.height - cardsizey)/2];
 
     for(let i = 0; i < 4; i++){
-        let index = (i + 4 - mySeat) % 4;
-        playerPanelSprites[index] = new PIXI.Sprite(
+        playerPanelSprites[i] = new PIXI.Sprite(
             PIXI.loader.resources["img/cardback.png"].texture
         );
 
-        playerPanelSprites[index].width = cardsizex;
-        playerPanelSprites[index].height = cardsizey;
-        playerPanelSprites[index].x = panel_pos_x[i];
-        playerPanelSprites[index].y = panel_pos_y[i];
-        playerPanelSprites[index].interactive = true;
-        playerPanelSprites[index].index = index;
-
+        playerPanelSprites[i].width = cardsizex;
+        playerPanelSprites[i].height = cardsizey;
+        playerPanelSprites[i].x = panel_pos_x[i];
+        playerPanelSprites[i].y = panel_pos_y[i];
+        playerPanelSprites[i].interactive = true;
+        
+        
         let icon_sprite = new PIXI.Sprite(PIXI.loader.resources["img/icons.png"].texture);
-        playerPanelSprites[index].addChild(icon_sprite);
+        icon_sprite.interactive = false;
+        playerPanelSprites[i].addChild(icon_sprite);
 
 
-        playerPropertyTextSprites[index] = [];
+        playerPropertyTextSprites[i] = [];
         for(let j = 0; j < 4; j++){
             var t = new PIXI.Text(
-                10,
+                11,
                 {font: '15px Arial', fill: 0x000000}
             );
-            playerPropertyTextSprites[index].push(t);
-            playerPropertyTextSprites[index][j].x = 95 + j * 56;
-            playerPropertyTextSprites[index][j].y = 116;
-            playerPanelSprites[index].addChild(playerPropertyTextSprites[index][j]);
+            playerPropertyTextSprites[i].push(t);
+            playerPropertyTextSprites[i][j].x = 95 + j * 56;
+            playerPropertyTextSprites[i][j].y = 116;
+            playerPanelSprites[i].addChild(playerPropertyTextSprites[i][j]);
         }
 
-        let label = new PIXI.Text(index,
+        playerSeatLabels[i] = new PIXI.Text(i,
             {font: '15px Arial', fill: 0xFFFFFF});
         
-        playerPanelSprites[index].addChild(label);
+        playerPanelSprites[i].addChild(playerSeatLabels[i]);
 
-        stage.addChild(playerPanelSprites[index]);
+        playerNameLabels[i] = new PIXI.Text(i,
+        {
+            font: '30px 黑体', fill: 0x332300
+        });
+        playerNameLabels[i].x = 30;
+        playerNameLabels[i].y = 30;
+        playerPanelSprites[i].addChild(playerNameLabels[i]);
+
+        stage.addChild(playerPanelSprites[i]);
     }
 
     /* 5 story card slots */
@@ -408,9 +462,9 @@ function setupUI(){
         );
 
         myStoryCardSprites[i].width = 2 * 0.025 * window.innerWidth;
-        myStoryCardSprites[i].height = 3 * 0.05 * window.innerHeight;
+        myStoryCardSprites[i].height = 3 * 0.025 * window.innerWidth;
         myStoryCardSprites[i].x = (24 + i*2) * 0.025 * window.innerWidth;
-        myStoryCardSprites[i].y = 16 * 0.05 * window.innerHeight;
+        myStoryCardSprites[i].y = 16 * 0.025 * window.innerWidth;
         myStoryCardSprites[i].index = i;
 
         stage.addChild(myStoryCardSprites[i]);
@@ -423,9 +477,9 @@ function setupUI(){
         );
 
         myActionCardSprites[i].width = 2 * 0.025 * window.innerWidth;
-        myActionCardSprites[i].height = 3 * 0.05 * window.innerHeight;
+        myActionCardSprites[i].height = 3 * 0.025 * window.innerWidth;
         myActionCardSprites[i].x = (12 + i * 2) * 0.025 * window.innerWidth;
-        myActionCardSprites[i].y = 16 * 0.05 * window.innerHeight;
+        myActionCardSprites[i].y = 16 * 0.025 * window.innerWidth;
         myActionCardSprites[i].index = i;
 
         stage.addChild(myActionCardSprites[i]);
@@ -433,12 +487,10 @@ function setupUI(){
 
     storyCardOnTableSprite = new PIXI.Sprite(PIXI.loader.resources["img/storycardback.png"].texture);
     storyCardOnTableSprite.width = 5 * 0.025 * window.innerWidth;
-    storyCardOnTableSprite.height = 8 * 0.05 * window.innerHeight;
+    storyCardOnTableSprite.height = 8 * 0.025 * window.innerWidth;
     storyCardOnTableSprite.x = 17.5 * 0.025 * window.innerWidth;
-    storyCardOnTableSprite.y = 6 * 0.05 * window.innerHeight;
+    storyCardOnTableSprite.y = 6 * 0.025 * window.innerWidth;
 
-    // debug
-    stage.addChild(storyCardOnTableSprite);
 
     for(let i = 0; i < 2; i++){
         actionCardOnTableSprites[i] = new PIXI.Sprite(
@@ -446,14 +498,10 @@ function setupUI(){
         );
 
         actionCardOnTableSprites[i].width = 4 * 0.025 * window.innerWidth;
-        actionCardOnTableSprites[i].height = 6 * 0.05 * window.innerHeight;
+        actionCardOnTableSprites[i].height = 6 * 0.025 * window.innerWidth;
         actionCardOnTableSprites[i].x = (11 + i*14) * 0.025 * window.innerWidth;
-        actionCardOnTableSprites[i].y = 7.5 * 0.05 * window.innerHeight;
-
-        // debug
-        stage.addChild(actionCardOnTableSprites[i]);
+        actionCardOnTableSprites[i].y = 7.5 * 0.025 * window.innerWidth;
     }
-
 
     selectStoryCardBorderSprite = new PIXI.Sprite(PIXI.loader.resources["img/border_vertical.png"].texture);
     selectPanelBorderSprite = new PIXI.Sprite(PIXI.loader.resources["img/border.png"].texture);
@@ -469,10 +517,12 @@ function setupTextOverlay() {
     for(let i = 0; i < 5; i++){
         let title_elm = document.createElement("div");
         title_elm.id = "myStoryCardTitleElement-"+i;
+        textOverlayElement.appendChild(title_elm);
         myStoryCardTitleElements.push(title_elm);
 
         let result_elm = document.createElement("div");
         result_elm.id = "myStoryCardResultElement-"+i;
+        textOverlayElement.appendChild(result_elm);
         myStoryCardResultElements.push(result_elm);
     }
 
@@ -481,107 +531,156 @@ function setupTextOverlay() {
     for(let i = 0; i < 2; i++){
         let title_elm = document.createElement("div");
         title_elm.id = "myActionCardTitleElement-"+i;
+        textOverlayElement.appendChild(title_elm);
         myActionCardTitleElements.push(title_elm);
 
         let result_elm = document.createElement("div");
         result_elm.id = "myActionCardResultElement-"+i;
+        textOverlayElement.appendChild(result_elm);
         myActionCardResultElements.push(result_elm);
     }
 
     storyCardOnTableTitleElement = document.createElement("div");
     storyCardOnTableTitleElement.id = "storyCardOnTableTitleElement";
+    textOverlayElement.appendChild(storyCardOnTableTitleElement);
     storyCardOnTableStoryElement = document.createElement("textarea");
+    storyCardOnTableStoryElement.readOnly = true;
     storyCardOnTableStoryElement.id = "storyCardOnTableStoryElement";
+    textOverlayElement.appendChild(storyCardOnTableStoryElement);
     storyCardOnTableOwnerElement = document.createElement("div");
     storyCardOnTableOwnerElement.id = "storyCardOnTableOwnerElement";
+    textOverlayElement.appendChild(storyCardOnTableOwnerElement);
+    
     
     for(let i = 0; i < 2; i++){
         actionCardOnTableActionElements[i] = document.createElement("div");
         actionCardOnTableActionElements[i].id = "actionCardOnTableActionElement-"+i;
+        textOverlayElement.appendChild(actionCardOnTableActionElements[i]);
         actionCardOnTableResultElements[i] = document.createElement("div");
         actionCardOnTableResultElements[i].id = "actionCardOnTableResultElement-"+i;
+        textOverlayElement.appendChild(actionCardOnTableResultElements[i]);
         actionCardOnTableOwnerElements[i] = document.createElement("div");
         actionCardOnTableOwnerElements[i].id = "actionCardOnTableOwnerElement-"+i;
+        textOverlayElement.appendChild(actionCardOnTableOwnerElements[i]);
     }
 
 }
 
-function setElementPosition(element, left, top){
-    element.style.left = left;
-    element.style.top = top;
+function setElementPosition(element, left, top, width, height, fontsize=15){
+    element.style.left = left + "px";
+    element.style.top = top + "px";
+    element.style.width = width + "px";
+    element.style.height = height + "px";
+    element.style.fontSize = fontsize + "px";
 }
 
 function adjustTextOverlayPositioning(){
+
+    var ratio = window.innerWidth / standardScreenWidth;
+
     // left action card on table
     setElementPosition(
         actionCardOnTableActionElements[0],
         12 * 0.025 * window.innerWidth,
-         8 * 0.05 * window.innerHeight,
+        8 * 0.025 * window.innerWidth,
+        2 * 0.025 * window.innerWidth,
+        1 * 0.025 * window.innerWidth,
+        30 * ratio,
     );
 
     setElementPosition(
         actionCardOnTableResultElements[0],
         11.5 * 0.025 * window.innerWidth,
-        10 * 0.05 * window.innerHeight,
+        10 * 0.025 * window.innerWidth,
+        3 * 0.025 * window.innerWidth,
+        1 * 0.025 * window.innerWidth,
+        15 * ratio,
     );
 
     setElementPosition(
         actionCardOnTableOwnerElements[0],
         12 * 0.025 * window.innerWidth,
-        12 * 0.05 * window.innerHeight
+        12 * 0.025 * window.innerWidth,
+        2 * 0.025 * window.innerWidth,
+        1 * 0.025 * window.innerWidth,
+        20 * ratio,
     );
 
 
     // story card on table
     setElementPosition(
         storyCardOnTableTitleElement,
-        18 * 0.025 * window.innerWidth,
-        6.5 * 0.05 * window.innerHeight
+        19 * 0.025 * window.innerWidth,
+        6.5 * 0.025 * window.innerWidth,
+        4 * 0.025 * window.innerWidth,
+        0.8 * 0.025 * window.innerWidth,
+        20 * ratio,
     );
 
     setElementPosition(
         storyCardOnTableStoryElement,
         18 * 0.025 * window.innerWidth,
-        8 * 0.05 * window.innerHeight
+        8 * 0.025 * window.innerWidth,
+        4 * 0.025 * window.innerWidth,
+        3 * 0.025 * window.innerWidth,
+        20 * ratio,
     );
 
     setElementPosition(
         storyCardOnTableOwnerElement,
         18 * 0.025 * window.innerWidth,
-        12 * 0.05 * window.innerHeight
+        12 * 0.025 * window.innerWidth,
+        4 * 0.025 * window.innerWidth,
+        1 * 0.025 * window.innerWidth,
+        20 * ratio,
     );
 
     // right action card on table
     setElementPosition(
         actionCardOnTableActionElements[1],
         26 * 0.025 * window.innerWidth,
-         8 * 0.05 * window.innerHeight,
+        8 * 0.025 * window.innerWidth,
+        2 * 0.025 * window.innerWidth,
+        1 * 0.025 * window.innerWidth,
+        30 * ratio,
     );
 
     setElementPosition(
         actionCardOnTableResultElements[1],
         25.5 * 0.025 * window.innerWidth,
-        10 * 0.05 * window.innerHeight,
+        10 * 0.025 * window.innerWidth,
+        3 * 0.025 * window.innerWidth,
+        1 * 0.025 * window.innerWidth,
+        15 * ratio,
     );
 
     setElementPosition(
         actionCardOnTableOwnerElements[1],
         26 * 0.025 * window.innerWidth,
-        12 * 0.05 * window.innerHeight
+        12 * 0.025 * window.innerWidth,
+        2 * 0.025 * window.innerWidth,
+        1 * 0.025 * window.innerWidth,
+        20 * ratio,
     );
 
     // my action cards
     for(let i = 0; i < 2; i++){
         setElementPosition(
             myActionCardTitleElements[i],
-            (12 + i*2) * 0.25 * window.innerWidth,
-            16.5 * 0.05 * window.innerHeight,
+            (12.5 + i*2) * 0.025 * window.innerWidth,
+            16.5 * 0.025 * window.innerWidth,
+            2 * 0.025 * window.innerWidth,
+            1 * 0.025 * window.innerWidth,
+            20 * ratio,
         );
 
         setElementPosition(
             myActionCardResultElements[i],
-            (12 + i*2) * 0.25 * window.innerWidth,
-            17.5 * 0.05 * window.innerHeight
+            (12.2 + i*2) * 0.025 * window.innerWidth,
+            17.8 * 0.025 * window.innerWidth,
+            2 * 0.025 * window.innerWidth,
+            1 * 0.025 * window.innerWidth,
+            15 * ratio,
         );
     }
 
@@ -589,14 +688,20 @@ function adjustTextOverlayPositioning(){
     for(let i = 0; i < 5; i++){
         setElementPosition(
             myStoryCardTitleElements[i],
-            (24 + i * 2) * 0.25 * window.innerWidth,
-            16.5 * 0.05 * window.innerHeight
+            (24.5 + i * 2) * 0.025 * window.innerWidth,
+            16.5 * 0.025 * window.innerWidth,
+            2 * 0.025 * window.innerWidth,
+            1 * 0.025 * window.innerWidth,
+            15 * ratio,
         );
 
         setElementPosition(
             myStoryCardResultElements[i],
-            (24 + i * 2) * 0.25 + window.innerWidth,
-            17.5 * 0.05 * window.innerHeight
+            (24.3 + i * 2) * 0.025 * window.innerWidth,
+            17.5 * 0.025 * window.innerWidth,
+            2 * 0.025 * window.innerWidth,
+            2.5 * 0.025 * window.innerWidth,
+            12 * ratio,
         );
     }
 }
@@ -604,9 +709,23 @@ function adjustTextOverlayPositioning(){
 
 /* Event Handlers */
 
+socket.on('StartGame', function(data){
+    lobbyDiv.style.display = "none";
+    gameDiv.style.display = "";
+
+    for(let i = 0; i < 4; i++){
+        playerPanelSprites[i].seatIndex = (i + 4 + mySeat) % 4;
+        playerSeatLabels[i].text = playerPanelSprites[i].seatIndex;
+        playerNameLabels[i].text = playerNameOnSeat[playerPanelSprites[i].seatIndex];
+    }
+});
+
+
 socket.on(GameEvent.InitCardPile, function(data){
     myStoryCards = data.storyCards;
     myActionCards = data.actionCards;
+    updateMyActionCardUI();
+    updateMyStoryCardUI();
     renderStage();
 });
 
@@ -619,93 +738,83 @@ var handInStoryCard = function(index, target){
 socket.on(GameEvent.CallingForStoryCard, function(){
     for(i in myStoryCardSprites){
         myStoryCardSprites[i].interactive = true;
-        myStoryCardSprites[i].mouseover = function(e){
+        myStoryCardSprites[i].on('mouseover', function(e){
+            if(lastSelectCardSprite != null) lastSelectCardSprite.removeChild(selectStoryCardBorderSprite);
             e.currentTarget.addChild(selectStoryCardBorderSprite);
             lastSelectCardSprite = e.currentTarget;
-            e.stopPropagation();
             renderStage();
-        }
-        myStoryCardSprites[i].mouseout = function(e){
-            e.currentTarget.removeChild(selecetStoryCardBorderSprite);
+        });
+        myStoryCardSprites[i].on('mouseout', function(e){
+            e.currentTarget.removeChild(selectStoryCardBorderSprite);
             lastSelectCardSprite = null;
-            e.stopPropagation();
             renderStage();
-        }
-        myStoryCardSprites[i].click = function(e){
-            mySelectedStoryCardIndex = e.currentTarget.index;
-            for(j in playerPanelSprites){
-                playerPanelSprites[j].interactive = true;
-                playerPanelSprites[j].mouseover = function(e){
-                    e.currentTarget.addChild(selectPanelBorderSprite);
-                    lastSelectPanelSprite = e.currentTarget;
-                    e.stopPropagation();
-                    renderStage();
-                }
-                playerPanelSprites[j].mouseout = function(e){
-                    e.currentTarget.removeChild(selectPanelBorderSprite);
-                    lastSelectCardSprite = null;
-                    e.stopPropagation();
-                    renderStage();
-                }
-                playerPanelSprites[j].click = function(e){
-                    handInStoryCard(mySelectedStoryCardIndex, e.currentTarget.index);
-
-                    if(lastSelectCardSprite != null) lastSelectCardSprite.removeChild(selectStoryCardBorderSprite);
-                    if(lastSelectPanelSprite != null) lastSelectPanelSprite.removeChild(selectPanelBorderSprite);
-
-                    for(k in myStoryCardSprites){
-                        myStoryCardSprites[k].interactive = false;
-                        myStoryCardSprites[k].mouseover = function(e){};
-                        myStoryCardSprites[k].mouseout = function(e){};
-                        myStoryCardSprites[k].click = function(e){}
-                    }
-                    for(k in playerPanelSprites){
-                        playerPanelSprites[k].interactive = false;
-                        playerPanelSprites[k].mouseover = function(e){};
-                        playerPanelSprites[k].mouseout = function(e){};
-                        playerPanelSprites[k].click = function(e){}
-                    }
-
-                    renderStage();
-                }
+        });
+        myStoryCardSprites[i].on('click', function(e){
+            SelectMyStoryCard(e.currentTarget.index);
+            for(j in myStoryCardSprites){
+                myStoryCardSprites[j].interactive = false;
             }
-        }
+        });
     }
 });
 
 
+function SelectMyStoryCard(index){
+    mySelectedStoryCardIndex = index;
+
+    for(i in playerPanelSprites){
+        if(playerPanelSprites[i].seatIndex == mySeat) continue;
+
+        playerPanelSprites[i].interactive = true;
+        playerPanelSprites[i].on('mouseover', function(ev){
+            ev.currentTarget.addChild(selectPanelBorderSprite);
+            lastSelectPanelSprite = ev.currentTarget;
+        });
+
+        playerPanelSprites[i].on('click', function(ev){
+            handInStoryCard(mySelectedStoryCardIndex, ev.currentTarget.seatIndex);
+
+            if(lastSelectCardSprite != null) lastSelectCardSprite.removeChild(selectStoryCardBorderSprite);
+            if(lastSelectPanelSprite != null) lastSelectPanelSprite.removeChild(selectPanelBorderSprite);
+
+            for(j in playerPanelSprites){
+                playerPanelSprites[j].interactive = false;
+            }
+        });
+    }
+}
+
+
+
 var handInActionCard = function(index){
-    socket.emit(GameEvent.HandInActionCard, {cardIndex : index});  
+    socket.emit(GameEvent.HandInActionCard, {cardIndex : index});
 };
 
 
 socket.on(GameEvent.CallingForActionCard, function(){
     for(i in myActionCardSprites){
         myActionCardSprites[i].interactive = true;
-        myActionCardSprites[i].mouseover = function(e){
+        myActionCardSprites[i].on('mouseover', function(e){
             e.currentTarget.addChild(selectStoryCardBorderSprite);
             lastSelectCardSprite = e.currentTarget;
             e.stopPropagation();
             renderStage();
-        }
-        myActionCardSprites[i].mouseout = function(e){
+        });
+        myActionCardSprites[i].on('mouseout', function(e){
             e.currentTarget.removeChild(selectStoryCardBorderSprite);
             lastSelectCardSprite = null;
             e.stopPropagation();
             renderStage();
-        }
-        myActionCardSprites[i].click = function(e){
+        });
+        myActionCardSprites[i].on('click', function(e){
             handInActionCard(e.currentTarget.index);
             for(j in myActionCardSprites){
                 myActionCardSprites[j].interactive = false;
-                myActionCardSprites[j].mouseout = function(e){}
-                myActionCardSprites[j].mouseover = function(e){}
-                myActionCardSprites[j].click = function(e){}
             }
             if(lastSelectCardSprite != null){
                 lastSelectCardSprite.removeChild(selectStoryCardBorderSprite);
             }
-        }
+        });
     }
 });
 
@@ -718,29 +827,26 @@ var makeDecision = function(index){
 socket.on(GameEvent.CallingForDecision, function(){
     for(i in actionCardOnTableSprites){
         actionCardOnTableSprites[i].interactive = true;
-        actionCardOnTableSprites[i].mouseover = function(e){
+        actionCardOnTableSprites[i].on('mouseover', function(e){
             e.currentTarget.addChild(selectStoryCardBorderSprite);
             lastSelectCardSprite = e.currentTarget;
             e.stopPropagation();
             renderStage();
-        }
-        actionCardOnTableSprites[i].mouseout = function(e){
+        });
+        actionCardOnTableSprites[i].on('mouseout', function(e){
             e.currentTarget.removeChild(selectStoryCardBorderSprite);
             lastSelectCardSprite = null;
             e.stopPropagation();
             renderStage();
-        }
-        actionCardOnTableSprites[i].click = function(e){
-            makeDecision(actionCardOnTableSprites[i].index);
+        });
+        actionCardOnTableSprites[i].on('click', function(e){
+            makeDecision(e.currentTarget.index);
             for(j in actionCardOnTableSprites){
                 actionCardOnTableSprites[j].interactive = false;
-                actionCardOnTableSprites[j].mouseover = function(e){}
-                actionCardOnTableSprites[j].mouseout = function(e){}
-                actionCardOnTableSprites[j].click = function(e){}
             }
             if(lastSelectCardSprite != null)
                 lastSelectCardSprite.removeChild(selectStoryCardBorderSprite);
-        }
+        });
     }
 })
 
@@ -757,45 +863,34 @@ socket.on(GameEvent.SyncStoryCards, function(data){
 socket.on(GameEvent.UpdateGameInfo, function(data){
     gameState = data.state;
     playerProperties = data.properties;
+    updatePlayerPropertyUI();
+
+
+    if(lastActivePanelSprite != null)
+        lastActivePanelSprite.removeChild(activePanelBorderSprite);
+    
+    var ind = (data.whosactive + 4 - mySeat) % 4;
+    playerPanelSprites[ind].addChild(activePanelBorderSprite);
+    lastActivePanelSprite = playerPanelSprites[ind];
 
     switch(data.state){
         case GameState.CallingForStoryCard:
         {
-            if(lastActivePanelSprite != null)
-                lastActivePanelSprite.removeChild(activePanelBorderSprite);
-            playerPanelSprites[data.whosactive].addChild(activePanelBorderSprite);
-            lastActivePanelSprite = playerPanelSprites[data.whosactive];
-            
-            for(let i = 0; i < 2; i++){
-                if(actionCardOnTableShown[i]){
-                    actionCardOnTableActionElements[i].style.display = "none";
-                    actionCardOnTableResultElements[i].style.display = "none";
-                    actionCardOnTableOwnerElements[i].style.display = "none";
-                    stage.removeChild(actionCardOnTableSprites[i]);
-                }
-            }
+            hideActionCardsOnTable();
+            hideStoryCardOnTable();
 
-
-            if(storyCardOnTable != null){
-                storyCardOnTableStoryElement.style.display = "none";
-                storyCardOnTableTitleElement.style.display = "none";
-                storyCardOnTableOwnerElement.style.display = "none";
-                stage.removeChild(storyCardOnTableSprite);
-            }
+            actionCardsOnTable = data.currentActions;
+            storyCardOnTable = data.currentStory;
 
             renderStage();
-
             storyCardOnTableOwner = data.whosactive;
+            storyCardOnTableTarget = data.whostargeted;
         }
         break;
 
         case GameState.CallingForActionCard_1:
         {
-            if(lastActivePanelSprite != null)
-                lastActivePanelSprite.removeChild(activePanelBorderSprite);
-            playerPanelSprites[data.whosactive].addChild(activePanelBorderSprite);
-            lastActivePanelSprite = playerPanelSprites[data.whosactive];
-
+            storyCardOnTable = data.currentStory;
             showStoryCardOnTable();
             updateMyActionCardUI(); // 显示手上的动作卡对当前事件的影响，方便玩家决策
 
@@ -805,24 +900,15 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
 
         case GameState.CallingForActionCard_2:
         {
-            if(lastActivePanelSprite != null)
-                lastActivePanelSprite.removeChild(activePanelBorderSprite);
-            playerPanelSprites[data.whosactive].addChild(activePanelBorderSprite);
-            lastActivePanelSprite = data.whosactive;
-
+            actionCardsOnTable = data.currentActions;
             showActionCardOnTable();
-
             actionCardOnTableOwners[1] = data.whosactive;
         }
         break;
 
         case GameState.CallingForDecision:
         {
-            if(lastActivePanelSprite != null)
-                lastActivePanelSprite.removeChild(activePanelBorderSprite);
-            playerPanelSprites[data.whosactive].addChild(activePanelBorderSprite);
-            lastActivePanelSprite = data.whosactive;
-
+            actionCardsOnTable = data.currentActions;
             showActionCardOnTable();
         }
         break;
