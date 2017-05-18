@@ -256,13 +256,20 @@ gameDiv.appendChild(renderer.view);
 
 var stage = new PIXI.Container();
 
+var cardback_url = "img/cardback.png";
+var icons_url = "img/icons.png";
+var border_url = "img/border.png";
+var border_vertical_url = "img/border_vertical.png";
+var storycardback_url = "img/storycardback.png";
+var border_active_url = "img/border_active.png";
+
 PIXI.loader
-    .add("http://120.24.39.72/img/cardback.png")
-    .add("http://120.24.39.72/img/icons.png")
-    .add("http://120.24.39.72/img/border.png")
-    .add("http://120.24.39.72/img/border_vertical.png")
-    .add("http://120.24.39.72/img/storycardback.png")
-    .add("http://120.24.39.72/img/border_active.png")
+    .add(cardback_url)
+    .add(icons_url)
+    .add(border_url)
+    .add(border_vertical_url)
+    .add(storycardback_url)
+    .add(border_active_url)
     .load(setupUI);
 
 
@@ -409,7 +416,7 @@ function setupUI(){
 
     for(let i = 0; i < 4; i++){
         playerPanelSprites[i] = new PIXI.Sprite(
-            PIXI.loader.resources["img/cardback.png"].texture
+            PIXI.loader.resources[cardback_url].texture
         );
 
         playerPanelSprites[i].width = cardsizex;
@@ -419,7 +426,7 @@ function setupUI(){
         playerPanelSprites[i].interactive = true;
         
         
-        let icon_sprite = new PIXI.Sprite(PIXI.loader.resources["img/icons.png"].texture);
+        let icon_sprite = new PIXI.Sprite(PIXI.loader.resources[icons_url].texture);
         icon_sprite.interactive = false;
         playerPanelSprites[i].addChild(icon_sprite);
 
@@ -458,7 +465,7 @@ function setupUI(){
 
     for(let i = 0; i < 5; i++){
         myStoryCardSprites[i] = new PIXI.Sprite(
-            PIXI.loader.resources["img/storycardback.png"].texture
+            PIXI.loader.resources[storycardback_url].texture
         );
 
         myStoryCardSprites[i].width = 2 * 0.025 * window.innerWidth;
@@ -473,7 +480,7 @@ function setupUI(){
     /* 2 action card slots */
     for(let i = 0; i < 2; i++){
         myActionCardSprites[i] = new PIXI.Sprite(
-            PIXI.loader.resources["img/storycardback.png"].texture
+            PIXI.loader.resources[storycardback_url].texture
         );
 
         myActionCardSprites[i].width = 2 * 0.025 * window.innerWidth;
@@ -485,7 +492,7 @@ function setupUI(){
         stage.addChild(myActionCardSprites[i]);
     }
 
-    storyCardOnTableSprite = new PIXI.Sprite(PIXI.loader.resources["img/storycardback.png"].texture);
+    storyCardOnTableSprite = new PIXI.Sprite(PIXI.loader.resources[storycardback_url].texture);
     storyCardOnTableSprite.width = 5 * 0.025 * window.innerWidth;
     storyCardOnTableSprite.height = 8 * 0.025 * window.innerWidth;
     storyCardOnTableSprite.x = 17.5 * 0.025 * window.innerWidth;
@@ -494,7 +501,7 @@ function setupUI(){
 
     for(let i = 0; i < 2; i++){
         actionCardOnTableSprites[i] = new PIXI.Sprite(
-            PIXI.loader.resources["img/storycardback.png"].texture
+            PIXI.loader.resources[storycardback_url].texture
         );
 
         actionCardOnTableSprites[i].width = 4 * 0.025 * window.innerWidth;
@@ -503,9 +510,9 @@ function setupUI(){
         actionCardOnTableSprites[i].y = 7.5 * 0.025 * window.innerWidth;
     }
 
-    selectStoryCardBorderSprite = new PIXI.Sprite(PIXI.loader.resources["img/border_vertical.png"].texture);
-    selectPanelBorderSprite = new PIXI.Sprite(PIXI.loader.resources["img/border.png"].texture);
-    activePanelBorderSprite = new PIXI.Sprite(PIXI.loader.resources["img/border_active.png"].texture);
+    selectStoryCardBorderSprite = new PIXI.Sprite(PIXI.loader.resources[border_vertical_url].texture);
+    selectPanelBorderSprite = new PIXI.Sprite(PIXI.loader.resources[border_url].texture);
+    activePanelBorderSprite = new PIXI.Sprite(PIXI.loader.resources[border_active_url].texture);
 
     renderStage();
 }
