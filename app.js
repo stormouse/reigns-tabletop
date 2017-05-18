@@ -6,9 +6,9 @@ var serv = require('http').Server(app);
 
 
 app.get('/', function(req, res){
-    res.sendFile(__dirname + '/client/new_index.html');
+    res.sendFile(__dirname + '/index.html');
 });
-app.use('/', express.static(__dirname + '/client'));
+app.use("/", express.static(__dirname + '/'));
 
 serv.listen(8080, "0.0.0.0");
 console.log('Server started.')
