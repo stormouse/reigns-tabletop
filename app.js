@@ -12,7 +12,7 @@ app.use('/client', express.static(__dirname + '/client'));
 app.use('/js', express.static(__dirname + '/client/js'));
 app.use('/img', express.static(__dirname + '/client/img'));
 
-serv.listen(9999);
+serv.listen(80, "0.0.0.0");
 console.log('Server started.')
 
 

@@ -623,7 +623,7 @@ function adjustTextOverlayPositioning(){
         8 * 0.025 * window.innerWidth,
         4 * 0.025 * window.innerWidth,
         3 * 0.025 * window.innerWidth,
-        20 * ratio,
+        12 * ratio,
     );
 
     setElementPosition(
@@ -873,6 +873,7 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
     playerPanelSprites[ind].addChild(activePanelBorderSprite);
     lastActivePanelSprite = playerPanelSprites[ind];
 
+
     switch(data.state){
         case GameState.CallingForStoryCard:
         {
@@ -884,16 +885,17 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
 
             renderStage();
             storyCardOnTableOwner = data.whosactive;
-            storyCardOnTableTarget = data.whostargeted;
         }
         break;
 
         case GameState.CallingForActionCard_1:
         {
+            storyCardOnTableTarget = data.whostargeted;
             storyCardOnTable = data.currentStory;
             showStoryCardOnTable();
             updateMyActionCardUI(); // 显示手上的动作卡对当前事件的影响，方便玩家决策
 
+            
             actionCardOnTableOwners[0] = data.whosactive;
         }
         break;
