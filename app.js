@@ -1,11 +1,17 @@
 
 /* ---  establish server  --- */
 var express = require('express')
+var cors = require('cors')
 var app = express();
 var serv = require('http').Server(app);
 
 
-app.get('/', function(req, res){
+var corsOptions = {
+    origin: 'http://120.24.39.72:8080/',
+    optionSuccessStatus: 200,
+}
+
+app.get('/', cors(corsOptions), function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 app.use("/", express.static(__dirname + '/'));
