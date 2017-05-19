@@ -2,7 +2,7 @@
 /* ---  establish server  --- */
 var express = require('express')
 var app = express();
-var serv = require('http').Server(app);
+var http = require('http');
 
 app.use(function (req, res, next) {
 
@@ -29,11 +29,11 @@ app.get('/', function(req, res){
 app.use("/img", express.static(__dirname + '/img'));
 app.use("/js", express.static(__dirname + '/js'));
 
-serv.listen(8080, "0.0.0.0");
+server = http.createServer(app);
+server.listen(8080, "0.0.0.0");
 console.log('Server started.')
 
-
-var io = require('socket.io')(serv);
+var io = require('socket.io').listen(server)
 
 /* --- load story cards from db --- */
 var ALL_STORY_TYPES = [];
