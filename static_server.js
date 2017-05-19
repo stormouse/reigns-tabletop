@@ -70,7 +70,13 @@ var server = http.createServer(function (req,res){
                     res.write(err.message);
                     res.end();
                 }else{
-                    res.writeHead(200,{'Content-Type':resContentType});
+                    res.writeHead(200,
+                        {
+                            'Content-Type':resContentType, 
+                            'Access-Control-Allow-Origin': "*",
+                            'Access-Control-Allow-Headers': "Content-Type,Content-Length, Authorization, Accept,X-Requested-With",
+                            'Access-Control-Allow-Methods': "PUT,POST,GET,DELETE,OPTIONS",
+                        });
                     res.write(data);
                     res.end();
                 }
