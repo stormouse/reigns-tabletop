@@ -158,7 +158,7 @@ const GameState = {
     CallingForActionCard_2 : "CallingForActionCard_2",
     CallingForDecision : "CallingForDecision",
     PerformAction : "PerformAction",
-    GameOver : "GameOver",
+    GameOver : "GameOver"
 };
 
 const GameEvent = {
@@ -178,7 +178,7 @@ const GameEvent = {
     SyncActionCards : "SyncActionCards",
     UpdateGameInfo : "UpdateGameInfo",
     AnnounceLoser : "AnnounceLoser",
-    EndGame : "EndGame",
+    EndGame : "EndGame"
 }
 
 /* Gameplay Variables */
@@ -730,7 +730,7 @@ function adjustTextOverlayPositioning(){
         8 * 0.025 * window.innerWidth,
         2 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        30 * ratio,
+        30 * ratio
     );
 
     setElementPosition(
@@ -739,7 +739,7 @@ function adjustTextOverlayPositioning(){
         10 * 0.025 * window.innerWidth,
         3 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        15 * ratio,
+        15 * ratio
     );
 
     setElementPosition(
@@ -748,7 +748,7 @@ function adjustTextOverlayPositioning(){
         12 * 0.025 * window.innerWidth,
         2 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        15 * ratio,
+        15 * ratio
     );
 
 
@@ -759,7 +759,7 @@ function adjustTextOverlayPositioning(){
         6.5 * 0.025 * window.innerWidth,
         4 * 0.025 * window.innerWidth,
         0.8 * 0.025 * window.innerWidth,
-        18 * ratio,
+        18 * ratio
     );
 
     setElementPosition(
@@ -768,7 +768,7 @@ function adjustTextOverlayPositioning(){
         8 * 0.025 * window.innerWidth,
         4 * 0.025 * window.innerWidth,
         3 * 0.025 * window.innerWidth,
-        12 * ratio,
+        12 * ratio
     );
 
     setElementPosition(
@@ -777,7 +777,7 @@ function adjustTextOverlayPositioning(){
         12 * 0.025 * window.innerWidth,
         4 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        15 * ratio,
+        15 * ratio
     );
 
     // right action card on table
@@ -787,7 +787,7 @@ function adjustTextOverlayPositioning(){
         8 * 0.025 * window.innerWidth,
         2 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        30 * ratio,
+        30 * ratio
     );
 
     setElementPosition(
@@ -796,7 +796,7 @@ function adjustTextOverlayPositioning(){
         10 * 0.025 * window.innerWidth,
         3 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        15 * ratio,
+        15 * ratio
     );
 
     setElementPosition(
@@ -805,7 +805,7 @@ function adjustTextOverlayPositioning(){
         12 * 0.025 * window.innerWidth,
         2 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        15 * ratio,
+        15 * ratio
     );
 
     // my action cards
@@ -816,7 +816,7 @@ function adjustTextOverlayPositioning(){
             16.5 * 0.025 * window.innerWidth,
             2 * 0.025 * window.innerWidth,
             1 * 0.025 * window.innerWidth,
-            20 * ratio,
+            20 * ratio
         );
 
         setElementPosition(
@@ -825,7 +825,7 @@ function adjustTextOverlayPositioning(){
             17.8 * 0.025 * window.innerWidth,
             2 * 0.025 * window.innerWidth,
             1 * 0.025 * window.innerWidth,
-            15 * ratio,
+            15 * ratio
         );
     }
 
@@ -837,7 +837,7 @@ function adjustTextOverlayPositioning(){
             16.5 * 0.025 * window.innerWidth,
             2 * 0.025 * window.innerWidth,
             1 * 0.025 * window.innerWidth,
-            15 * ratio,
+            15 * ratio
         );
 
         setElementPosition(
@@ -846,7 +846,7 @@ function adjustTextOverlayPositioning(){
             17.5 * 0.025 * window.innerWidth,
             2 * 0.025 * window.innerWidth,
             2.5 * 0.025 * window.innerWidth,
-            12 * ratio,
+            12 * ratio
         );
     }
 }
@@ -877,7 +877,7 @@ socket.on(GameEvent.InitCardPile, function(data){
 
 var handInStoryCard = function(index, target){
     socket.emit(GameEvent.HandInStoryCard, {cardIndex : index, target : target});
-}
+};
 
 
 socket.on(GameEvent.CallingForStoryCard, function(){
@@ -966,7 +966,7 @@ socket.on(GameEvent.CallingForActionCard, function(){
 
 var makeDecision = function(index){
     socket.emit(GameEvent.MakeDecision, {decision : index});
-}
+};
 
 
 socket.on(GameEvent.CallingForDecision, function(){

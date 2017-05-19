@@ -9,7 +9,7 @@
             type : "story",
             name : prototype.name,
             story : prototype.story,
-            result : prototype.result,
+            result : prototype.result
         };
 
         return self;
@@ -21,7 +21,7 @@
             id : id,
             type : "action",
             name : prototype.name,
-            action : prototype.action,
+            action : prototype.action
         };
 
         return self;
@@ -36,7 +36,7 @@
         CallingForActionCard_2 : "CallingForActionCard_2",
         CallingForDecision : "CallingForDecision",
         PerformAction : "PerformAction",
-        GameOver : "GameOver",
+        GameOver : "GameOver"
     };
 
 
@@ -58,7 +58,7 @@
         SyncActionCards : "SyncActionCards",
         UpdateGameInfo : "UpdateGameInfo",
         AnnounceLoser : "AnnounceLoser",
-        EndGame : "EndGame",
+        EndGame : "EndGame"
     }
 
 
