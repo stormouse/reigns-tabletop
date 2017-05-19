@@ -1,4 +1,6 @@
 
+"use strict"
+
 /* ---  establish server  --- */
 var express = require('express')
 var app = express();
@@ -10,7 +12,7 @@ app.get('/', function(req, res){
 });
 app.use(express.static(__dirname));
 
-server = http.createServer(app);
+var server = http.createServer(app);
 server.listen(8080, "0.0.0.0");
 console.log('Server started.')
 
@@ -39,7 +41,7 @@ function LoadActionCards(){
 }
 
 function OnStoryRowsLoaded(err, rows){
-    for(i in rows){
+    for(let i in rows){
         let data = {
             name : rows[i].name,
             story : rows[i].story,
@@ -53,7 +55,7 @@ function OnStoryRowsLoaded(err, rows){
 }
 
 function OnActionRowsLoaded(err, rows){
-    for(i in rows){
+    for(let i in rows){
         let data = {
             name : rows[i].name,
             action : rows[i].action,
@@ -113,7 +115,7 @@ var Room = function(){
 
 
     self.Broadcast = function(event, data){
-        for(i in User.list){
+        for(let i in User.list){
             User.list[i].socket.emit(event, data);
         }
     };
@@ -163,7 +165,7 @@ var Room = function(){
                 return;
             }
 
-            for(i in User.list){
+            for(let i in User.list){
                 if(User.list[i].name == data.username){
                     socket.emit("LoginResponse", {reason : "玩家昵称被占用"});
                     return;
@@ -188,7 +190,7 @@ var Room = function(){
                 let seatIndex = data.seat;
                 if(self.table[seatIndex] == -1)
                 {
-                    for(i in self.table){
+                    for(let i in self.table){
                         if(self.table[i] == socket.id){
                             self.table[i] = -1;
                             self.ready[i] = false;
@@ -201,7 +203,7 @@ var Room = function(){
 
 
             socket.on("disconnect", function(){
-                for(i in self.table){
+                for(let i in self.table){
                     if(self.table[i] == socket.id){
                         self.table[i] = -1;
                         self.ready[i] = false;
@@ -217,7 +219,7 @@ var Room = function(){
 
 
             socket.on("Ready", function(){
-                for(i in self.table){
+                for(let i in self.table){
                     if(self.table[i] == socket.id) self.ready[i] = true;
                 }
 
@@ -225,11 +227,11 @@ var Room = function(){
                 self.BroadcastSeatInfo();
 
                 let all_ready = true;
-                for(i in self.ready) all_ready = all_ready && self.ready[i];
+                for(let i in self.ready) all_ready = all_ready && self.ready[i];
 
                 if(all_ready){
                     var players = {};
-                    for(id in User.list){
+                    for(let id in User.list){
                         players[id] = Player(id, User.list[id].socket);
                         players[id].socket.emit("StartGame");
                     }

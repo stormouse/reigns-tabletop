@@ -4,7 +4,7 @@
   "description": "a tabletop game inspired by Reigns",
   "main": "app.js",
   "webkit": {
-      "page-cache":false
+      "page-cache": false
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

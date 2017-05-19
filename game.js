@@ -114,7 +114,7 @@
             if(self.currentActions.length > 0)
             {
                 info.currentActions = [];
-                for(i in self.currentActions){
+                for(let i in self.currentActions){
                     info.currentActions.push(self.currentActions[i].action);
                 }
             }
@@ -127,7 +127,7 @@
         }
 
         self.Broadcast = function(event, data){
-            for(i in self.players){
+            for(let i in self.players){
                 self.players[i].socket.emit(event, data);
             }
         }
@@ -353,14 +353,14 @@
                     player.storyCards.push(self.NextStoryCard());
 
                     let clientStoryCards = [];
-                    for(i in player.storyCards) 
+                    for(let i in player.storyCards) 
                         clientStoryCards.push(self.DesensitizeStoryCard(player.storyCards[i]));          
                     player.socket.emit(GameEvent.SyncStoryCards, clientStoryCards);
 
                     self.currentStory = card;
                     self.storyDiscarded.push(card);
                     self.whostargeted = data.target;
-                    for(i in self.table){
+                    for(let i in self.table){
                         if(i != self.whosturn && i != self.whostargeted)
                             self.whosleft.push(i);
                     }
@@ -386,7 +386,7 @@
                     player.actionCards.push(self.NextActionCard());
 
                     let clientActionCards = [];
-                    for(i in player.actionCards) 
+                    for(let i in player.actionCards) 
                         clientActionCards.push(self.DesensitizeActionCard(player.actionCards[i]));          
                     player.socket.emit(GameEvent.SyncActionCards, clientActionCards);
 
@@ -413,7 +413,7 @@
                     player.actionCards.push(self.NextActionCard());
 
                     let clientActionCards = [];
-                    for(i in player.actionCards) 
+                    for(let i in player.actionCards) 
                         clientActionCards.push(self.DesensitizeActionCard(player.actionCards[i]));          
                     player.socket.emit(GameEvent.SyncActionCards, clientActionCards);
 

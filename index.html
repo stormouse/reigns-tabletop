@@ -879,7 +879,7 @@ var handInStoryCard = function(index, target){
 
 
 socket.on(GameEvent.CallingForStoryCard, function(){
-    for(i in myStoryCardSprites){
+    for(let i in myStoryCardSprites){
         myStoryCardSprites[i].interactive = true;
         myStoryCardSprites[i].on('mouseover', function(e){
             if(lastSelectCardSprite != null) lastSelectCardSprite.removeChild(selectStoryCardBorderSprite);
@@ -902,7 +902,7 @@ socket.on(GameEvent.CallingForStoryCard, function(){
 function SelectMyStoryCard(index){
     mySelectedStoryCardIndex = index;
 
-    for(i in playerPanelSprites){
+    for(let i in playerPanelSprites){
         if(playerPanelSprites[i].seatIndex == mySeat) continue;
 
         playerPanelSprites[i].interactive = true;
@@ -917,10 +917,10 @@ function SelectMyStoryCard(index){
             if(lastSelectCardSprite != null) lastSelectCardSprite.removeChild(selectStoryCardBorderSprite);
             if(lastSelectPanelSprite != null) lastSelectPanelSprite.removeChild(selectPanelBorderSprite);
 
-            for(j in playerPanelSprites){
+            for(let j in playerPanelSprites){
                 playerPanelSprites[j].interactive = false;
             }
-            for(j in myStoryCardSprites){
+            for(let j in myStoryCardSprites){
                 myStoryCardSprites[j].interactive = false;
             }
         });
@@ -935,7 +935,7 @@ var handInActionCard = function(index){
 
 
 socket.on(GameEvent.CallingForActionCard, function(){
-    for(i in myActionCardSprites){
+    for(let i in myActionCardSprites){
         myActionCardSprites[i].interactive = true;
         myActionCardSprites[i].on('mouseover', function(e){
             e.currentTarget.addChild(selectStoryCardBorderSprite);
@@ -951,7 +951,7 @@ socket.on(GameEvent.CallingForActionCard, function(){
         });
         myActionCardSprites[i].on('click', function(e){
             handInActionCard(e.currentTarget.index);
-            for(j in myActionCardSprites){
+            for(let j in myActionCardSprites){
                 myActionCardSprites[j].interactive = false;
             }
             if(lastSelectCardSprite != null){
@@ -968,7 +968,7 @@ var makeDecision = function(index){
 
 
 socket.on(GameEvent.CallingForDecision, function(){
-    for(i in actionCardOnTableSprites){
+    for(let i in actionCardOnTableSprites){
         actionCardOnTableSprites[i].interactive = true;
         actionCardOnTableSprites[i].on('mouseover', function(e){
             e.currentTarget.addChild(selectStoryCardBorderSprite);
@@ -984,7 +984,7 @@ socket.on(GameEvent.CallingForDecision, function(){
         });
         actionCardOnTableSprites[i].on('click', function(e){
             makeDecision(e.currentTarget.index);
-            for(j in actionCardOnTableSprites){
+            for(let j in actionCardOnTableSprites){
                 actionCardOnTableSprites[j].interactive = false;
             }
             if(lastSelectCardSprite != null)
