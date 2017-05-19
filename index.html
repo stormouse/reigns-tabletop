@@ -271,18 +271,77 @@ var url_bordervertical = "border_vertical.png";
 var url_storycardback = "storycardback.png";
 var url_borderactive = "border_active.png";
 
-let options = {
-    crossOrigin: true
-};
+var resource_count = 0;
+var resource_loaded = function(){
+    resource_count++;
+    if(resource_count == 6){
+        setupUI();
+    }
+}
 
-PIXI.loader
-    .add(res_cardback, url_cardback, options)
-    .add(res_icons, url_icons, options)
-    .add(res_border, url_border, options)
-    .add(res_bordervertical, url_bordervertical, options)
-    .add(res_storycardback, url_storycardback, options)
-    .add(res_borderactive, url_borderactive, options)
-    .load(setupUI);
+var img_cardback = new Image();
+img_cardback.crossOrigin = true;
+img_cardback.src = url_cardback;
+img_cardback.onload = function(){
+    let tex = new PIXI.BaseTexture(this);
+    PIXI.loader.resources[res_cardback] = {name : res_cardback, texture : new PIXI.Texture(tex)};
+    resource_loaded();
+}
+
+var img_icons = new Image();
+img_icons.crossOrigin = true;
+img_icons.src = url_icons;
+img_icons.onload = function(){
+    let tex = new PIXI.BaseTexture(this);
+    PIXI.loader.resources[res_icons] = {name : res_icons, texture : new PIXI.Texture(tex)};
+    resource_loaded();
+}
+
+var img_border = new Image();
+img_border.crossOrigin = true;
+img_border.src = url_border;
+img_border.onload = function(){
+    let tex = new PIXI.BaseTexture(this);
+    PIXI.loader.resources[res_border] = {name : res_border, texture : new PIXI.Texture(tex)};
+    resource_loaded();
+}
+
+var img_bordervertical = new Image();
+img_bordervertical.crossOrigin = true;
+img_bordervertical.src = url_bordervertical;
+img_bordervertical.onload = function(){
+    let tex = new PIXI.BaseTexture(this);
+    PIXI.loader.resources[res_bordervertical] = {name : res_bordervertical, texture : new PIXI.Texture(tex)};
+    resource_loaded();
+}
+
+var img_storycardback = new Image();
+img_storycardback.crossOrigin = true;
+img_storycardback.src = url_storycardback;
+img_storycardback.onload = function(){
+    let tex = new PIXI.BaseTexture(this);
+    PIXI.loader.resources[res_storycardback] = {name : res_storycardback, texture : new PIXI.Texture(tex)};
+    resource_loaded();
+}
+
+var img_borderactive = new Image();
+img_borderactive.crossOrigin = true;
+img_borderactive.src = url_borderactive;
+img_borderactive.onload = function(){
+    let tex = new PIXI.BaseTexture(this);
+    PIXI.loader.resources[res_borderactive] = {name : res_borderactive, texture : new PIXI.Texture(tex)};
+    resource_loaded();
+}
+
+
+// PIXI.loader
+//     .add(res_cardback, url_cardback)
+//     .add(res_icons, url_icons)
+//     .add(res_border, url_border)
+//     .add(res_bordervertical, url_bordervertical)
+//     .add(res_storycardback, url_storycardback)
+//     .add(res_borderactive, url_borderactive)
+//     .load(setupUI);
 
 
 window.onresize = function(){
