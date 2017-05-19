@@ -251,7 +251,7 @@
                     self.currentStory = null;
                     self.currentDecision = null;
 
-                    self.Transitor();
+                    self.Transitor(null);
                     
                 }
                 break;
@@ -334,7 +334,7 @@
         }
 
         /* Transit Out */
-        self.Transitor = function(data=null){
+        self.Transitor = function(data){
             switch(self.state){
                 case GameState.SetNewActivePlayer:
                 self.EnterState(GameState.CallingForStoryCard);
