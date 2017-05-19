@@ -10,7 +10,8 @@ app.use(cors());
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
-app.use("/", express.static(__dirname + '/'));
+app.use("/img", express.static(__dirname + '/img'));
+app.use("/js", express.static(__dirname + '/js'));
 
 serv.listen(8080, "0.0.0.0");
 console.log('Server started.')
