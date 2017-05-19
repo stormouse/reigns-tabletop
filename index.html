@@ -271,14 +271,17 @@ var url_bordervertical = "border_vertical.png";
 var url_storycardback = "storycardback.png";
 var url_borderactive = "border_active.png";
 
+let options = {
+    crossOrigin: true
+};
 
 PIXI.loader
-    .add(res_cardback, url_cardback)
-    .add(res_icons, url_icons)
-    .add(res_border, url_border)
-    .add(res_bordervertical, url_bordervertical)
-    .add(res_storycardback, url_storycardback)
-    .add(res_borderactive, url_borderactive)
+    .add(res_cardback, url_cardback, options)
+    .add(res_icons, url_icons, options)
+    .add(res_border, url_border, options)
+    .add(res_bordervertical, url_bordervertical, options)
+    .add(res_storycardback, url_storycardback, options)
+    .add(res_borderactive, url_borderactive, options)
     .load(setupUI);
 
 
