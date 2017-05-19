@@ -58,6 +58,7 @@
         SyncActionCards : "SyncActionCards",
         UpdateGameInfo : "UpdateGameInfo",
         AnnounceLoser : "AnnounceLoser",
+        EndGame : "EndGame",
     }
 
 
@@ -309,6 +310,8 @@
                     player.property.eco += value.eco;
                     player.property.people += value.people;
 
+                    self.Broadcast(GameEvent.UpdateGameInfo, self.PackInfo());
+
                     if(player.property.army <= 0 || player.property.army >= 20 ||
                        player.property.church <= 0 || player.property.church >= 20 ||
                        player.property.eco <= 0 || player.property.eco >= 20 ||
@@ -316,11 +319,10 @@
                        {
                            self.EndGame({
                                    reason : "kingdomfall",
-                                   loser : player
+                                   loser : player.whostargeted
                                });
                        }
                     else {
-                        self.Broadcast(GameEvent.UpdateGameInfo, self.PackInfo());
                         self.Transitor();
                     }
                     
@@ -365,7 +367,9 @@
                     
                     player.socket.removeListener(GameEvent.HandInStoryCard, self.Transitor);
                     
-                    self.whosactive = self.whosleft[0];
+                    let next = self.whosturn;
+                    while(next != self.whosleft[0] && next != self.whosleft[1]){next = (next + 1) % 4;}
+                    self.whosactive = next;
                     self.EnterState(GameState.CallingForActionCard_1);
                 }
                 break;
@@ -390,7 +394,9 @@
                     self.actionDiscarded.push(card);
                     player.socket.removeListener(GameEvent.HandInActionCard, self.Transitor);
 
-                    self.whosactive = self.whosleft[1];
+                    let next = self.whosactive != self.whosleft[0] ? self.whosleft[0] : self.whosleft[1];
+
+                    self.whosactive = next;
                     self.EnterState(GameState.CallingForActionCard_2);
                 }
                 break;
@@ -454,11 +460,12 @@
             switch(args.reason){
                 case "kingdomfall":
                 {
-                    self.Broadcast(GameEvent.AnnounceLoser, args.loser.name+"的王国已经倾覆");
+                    self.Broadcast(GameEvent.AnnounceLoser, args.loser+"的王国已经倾覆");   
                 }
                 break;
             }
 
+            self.Broadcast(GameEvent.EndGame, args.reason);
             self.EndGameCallback();
         }
 

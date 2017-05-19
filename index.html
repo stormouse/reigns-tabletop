@@ -176,6 +176,7 @@ const GameEvent = {
     SyncActionCards : "SyncActionCards",
     UpdateGameInfo : "UpdateGameInfo",
     AnnounceLoser : "AnnounceLoser",
+    EndGame : "EndGame",
 }
 
 /* Gameplay Variables */
@@ -273,6 +274,12 @@ PIXI.loader
     .load(setupUI);
 
 
+window.onresize = function(){
+    // renderer.resize(window.innerWidth, window.innerWidth / 2);
+    adjustTextOverlayPositioning();
+    adjustUIPositioning();
+}
+
 setupTextOverlay();
 adjustTextOverlayPositioning();
 
@@ -348,10 +355,12 @@ function showStoryCardOnTable(){
     stage.addChild(storyCardOnTableSprite);
     storyCardOnTableTitleElement.innerText = storyCardOnTable.name;
     storyCardOnTableTitleElement.style.display = "";
+    storyCardOnTableTitleElement.style.textAlign = "center";
     storyCardOnTableStoryElement.innerText = storyCardOnTable.story;
     storyCardOnTableStoryElement.style.display = "";
     storyCardOnTableOwnerElement.innerText = playerNameOnSeat[storyCardOnTableOwner] + " 发给 " + playerNameOnSeat[storyCardOnTableTarget];
     storyCardOnTableOwnerElement.style.display = "";
+    storyCardOnTableOwnerElement.style.textAlign = "center";
     renderStage();
 }
 
@@ -518,6 +527,63 @@ function setupUI(){
 }
 
 
+function adjustUIPositioning(){
+
+    var cardsizex = window.innerWidth / standardScreenWidth * standardCardWidth;
+    var cardsizey = cardsizex * standardCardHeight / standardCardWidth;
+    var bordersizex = 0.025 * 2.5 * window.innerWidth, bordersizey = 0.5 * 0.025 * window.innerWidth;
+    var panel_pos_x = [(window.innerWidth - cardsizex)/2, bordersizex, (window.innerWidth - cardsizex)/2, window.innerWidth - bordersizex - cardsizex];
+    var panel_pos_y = [window.innerHeight - bordersizey - cardsizey, (window.innerHeight - cardsizey)/2, bordersizey, (window.innerHeight - cardsizey)/2];
+
+    for(let i = 0; i < 4; i++){
+        playerPanelSprites[i].width = cardsizex;
+        playerPanelSprites[i].height = cardsizey;
+        playerPanelSprites[i].x = panel_pos_x[i];
+        playerPanelSprites[i].y = panel_pos_y[i];
+
+
+        playerNameLabels[i] = new PIXI.Text(i,
+        {
+            font: '30px 黑体', fill: 0x332300
+        });
+    }
+
+    /* 5 story card slots */
+    var storycardsizex = standardCardHeight * standardScreenWidth / standardScreenWidth; // correct!
+    var storycardsizey = storycardsizex * standardCardWidth / standardCardHeight;                 // correct!
+
+    for(let i = 0; i < 5; i++){
+        myStoryCardSprites[i].width = 2 * 0.025 * window.innerWidth;
+        myStoryCardSprites[i].height = 3 * 0.025 * window.innerWidth;
+        myStoryCardSprites[i].x = (24 + i*2) * 0.025 * window.innerWidth;
+        myStoryCardSprites[i].y = 16 * 0.025 * window.innerWidth;
+    }
+
+    /* 2 action card slots */
+    for(let i = 0; i < 2; i++){
+        myActionCardSprites[i].width = 2 * 0.025 * window.innerWidth;
+        myActionCardSprites[i].height = 3 * 0.025 * window.innerWidth;
+        myActionCardSprites[i].x = (12 + i * 2) * 0.025 * window.innerWidth;
+        myActionCardSprites[i].y = 16 * 0.025 * window.innerWidth;
+    }
+
+    storyCardOnTableSprite.width = 5 * 0.025 * window.innerWidth;
+    storyCardOnTableSprite.height = 8 * 0.025 * window.innerWidth;
+    storyCardOnTableSprite.x = 17.5 * 0.025 * window.innerWidth;
+    storyCardOnTableSprite.y = 6 * 0.025 * window.innerWidth;
+
+
+    for(let i = 0; i < 2; i++){
+        actionCardOnTableSprites[i].width = 4 * 0.025 * window.innerWidth;
+        actionCardOnTableSprites[i].height = 6 * 0.025 * window.innerWidth;
+        actionCardOnTableSprites[i].x = (11 + i*14) * 0.025 * window.innerWidth;
+        actionCardOnTableSprites[i].y = 7.5 * 0.025 * window.innerWidth;
+    }
+
+}
+
+
+
 function setupTextOverlay() {
     myStoryCardTitleElements = [];
     myStoryCardResultElements = [];
@@ -610,18 +676,18 @@ function adjustTextOverlayPositioning(){
         12 * 0.025 * window.innerWidth,
         2 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        20 * ratio,
+        15 * ratio,
     );
 
 
     // story card on table
     setElementPosition(
         storyCardOnTableTitleElement,
-        19 * 0.025 * window.innerWidth,
+        18 * 0.025 * window.innerWidth,
         6.5 * 0.025 * window.innerWidth,
         4 * 0.025 * window.innerWidth,
         0.8 * 0.025 * window.innerWidth,
-        20 * ratio,
+        18 * ratio,
     );
 
     setElementPosition(
@@ -639,7 +705,7 @@ function adjustTextOverlayPositioning(){
         12 * 0.025 * window.innerWidth,
         4 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        20 * ratio,
+        15 * ratio,
     );
 
     // right action card on table
@@ -667,7 +733,7 @@ function adjustTextOverlayPositioning(){
         12 * 0.025 * window.innerWidth,
         2 * 0.025 * window.innerWidth,
         1 * 0.025 * window.innerWidth,
-        20 * ratio,
+        15 * ratio,
     );
 
     // my action cards
@@ -758,9 +824,6 @@ socket.on(GameEvent.CallingForStoryCard, function(){
         });
         myStoryCardSprites[i].on('click', function(e){
             SelectMyStoryCard(e.currentTarget.index);
-            for(j in myStoryCardSprites){
-                myStoryCardSprites[j].interactive = false;
-            }
         });
     }
 });
@@ -786,6 +849,9 @@ function SelectMyStoryCard(index){
 
             for(j in playerPanelSprites){
                 playerPanelSprites[j].interactive = false;
+            }
+            for(j in myStoryCardSprites){
+                myStoryCardSprites[j].interactive = false;
             }
         });
     }
@@ -902,15 +968,10 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
 
             actionCardOnTableOwners[0] = data.whosactive;
 
-            let i1=-1, i2;
-            for(let i=0;i<4;i++){
-                if(i != storyCardOnTableTarget && i != storyCardOnTableOwner){
-                    if(i1 == -1) i1 = i;
-                    else i2 = i;
-                }
-            }
 
-            let ind = ((i1 < i2 ? i1 : i2) + 4 - mySeat) % 4;
+            let next = storyCardOnTableOwner;
+            while(next == storyCardOnTableOwner || next == storyCardOnTableTarget) next = (next + 1) % 4;
+            let ind = (next + 4 - mySeat) % 4;
             playerPanelSprites[ind].addChild(activePanelBorderSprite);
         }
         break;
@@ -921,14 +982,9 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
             showActionCardOnTable();
             actionCardOnTableOwners[1] = data.whosactive;
 
-            let i1=-1, i2;
-            for(let i=0;i<4;i++){
-                if(i != storyCardOnTableTarget && i != storyCardOnTableOwner){
-                    if(i1 == -1) i1 = i;
-                    else i2 = i;
-                }
-            }
-            let ind = ((i1 > i2 ? i1 : i2) + 4 - mySeat) % 4;
+            let next = storyCardOnTableOwner + 4;
+            while((next % 4) == storyCardOnTableOwner || (next % 4) == storyCardOnTableTarget) next = (next - 1) % 4;
+            let ind = ((next % 4) + 4 - mySeat) % 4;
             playerPanelSprites[ind].addChild(activePanelBorderSprite);
         }
         break;
@@ -948,9 +1004,17 @@ socket.on(GameEvent.UpdateGameInfo, function(data){
 
 
 socket.on(GameEvent.AnnounceLoser, function(data){
-    alert(data);
+    alert(playerNameOnSeat[storyCardOnTableTarget] + "的王国覆灭了！");
+
 });
 
+
+socket.on(GameEvent.EndGame, function(reason){
+    if(reason != null) alert(reason);
+    
+    gameDiv.style.display = "none";
+    lobbyDiv.style.display = "";
+})
 
 
 </script>

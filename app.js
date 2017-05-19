@@ -189,7 +189,10 @@ var Room = function(){
                 if(self.table[seatIndex] == -1)
                 {
                     for(i in self.table){
-                        if(self.table[i] == socket.id) self.table[i] = -1;
+                        if(self.table[i] == socket.id){
+                            self.table[i] = -1;
+                            self.ready[i] = false;
+                        }
                     }
                     self.table[seatIndex] = socket.id;
                 }
@@ -206,6 +209,9 @@ var Room = function(){
                 }
                 self.Broadcast("AddToChat", "玩家["+User.list[socket.id].name+"]离开了房间");
                 self.BroadcastSeatInfo();
+                if(self.game != null){
+                    self.game.EndGame({reason: "玩家["+User.list[socket.id].name+"]离开了游戏"})
+                }
                 delete User.list[socket.id];
             });
 
