@@ -26,8 +26,7 @@ app.use(function (req, res, next) {
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
-app.use("/img", express.static(__dirname + '/img'));
-app.use("/js", express.static(__dirname + '/js'));
+app.use(express.static(__dirname));
 
 server = http.createServer(app);
 server.listen(8080, "0.0.0.0");
