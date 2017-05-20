@@ -522,6 +522,7 @@ function setupUI(){
         playerPanelSprites[i].x = panel_pos_x[i];
         playerPanelSprites[i].y = panel_pos_y[i];
         playerPanelSprites[i].interactive = true;
+        playerPanelSprites[i].seatIndex = i;        // temp
         
         
         let icon_sprite = new PIXI.Sprite(PIXI.loader.resources[res_icons].texture);
@@ -541,7 +542,7 @@ function setupUI(){
             playerPanelSprites[i].addChild(playerPropertyTextSprites[i][j]);
         }
 
-        playerSeatLabels[i] = new PIXI.Text(i,
+        playerSeatLabels[i] = new PIXI.Text(playerPanelSprites[i].seatIndex,
             {font: '15px Arial', fill: 0xFFFFFF});
         
         playerPanelSprites[i].addChild(playerSeatLabels[i]);
@@ -633,7 +634,7 @@ function adjustUIPositioning(){
         playerPanelSprites[i].y = panel_pos_y[i];
 
 
-        playerNameLabels[i] = new PIXI.Text(i,
+        playerNameLabels[i] = new PIXI.Text(playerNameOnSeat[playerPanelSprites[i].index],
         {
             font: '30px 黑体', fill: 0x332300
         });
