@@ -281,7 +281,6 @@ var resource_loaded = function(){
     resource_count++;
     if(resource_count == 7){
         setupUI();
-        assetLoaded = true;
     }
 }
 
@@ -617,6 +616,8 @@ function setupUI(){
     activePanelBorderSprite = new PIXI.Sprite(PIXI.loader.resources[res_borderactive].texture);
 
     renderStage();
+
+    assetLoaded = true;
 }
 
 
