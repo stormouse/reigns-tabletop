@@ -275,11 +275,13 @@ var url_storycardback = "img/storycardback.png?random=" + Math.random();
 var url_borderactive = "img/border_active.png?random=" + Math.random();
 var url_background = 'img/bg.png?random=' + Math.random();
 
+var assetLoaded = false;
 var resource_count = 0;
 var resource_loaded = function(){
     resource_count++;
     if(resource_count == 7){
         setupUI();
+        assetLoaded = true;
     }
 }
 
@@ -362,7 +364,8 @@ img_background.onload = function(){
 window.onresize = function(){
     renderer.resize(window.innerWidth, window.innerWidth / 2);
     adjustTextOverlayPositioning();
-    adjustUIPositioning();
+    if(assetLoaded)
+        adjustUIPositioning();
 }
 
 setupTextOverlay();
