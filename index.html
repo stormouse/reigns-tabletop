@@ -550,7 +550,7 @@ function setupUI(){
         
         playerPanelSprites[i].addChild(playerSeatLabels[i]);
 
-        playerNameLabels[i] = new PIXI.Text(i,
+        playerNameLabels[i] = new PIXI.Text("",
         {
             font: '30px 黑体', fill: 0x332300
         });
@@ -635,12 +635,6 @@ function adjustUIPositioning(){
         playerPanelSprites[i].height = cardsizey;
         playerPanelSprites[i].x = panel_pos_x[i];
         playerPanelSprites[i].y = panel_pos_y[i];
-
-
-        playerNameLabels[i] = new PIXI.Text(playerNameOnSeat[playerPanelSprites[i].index],
-        {
-            font: '30px 黑体', fill: 0x332300
-        });
     }
 
     /* 5 story card slots */
