@@ -123,7 +123,7 @@ socket.on('UpdateSeatInfo', function(data){
 
             if(data.names[i] != myName){
                 document.getElementById("table_seat_"+i).innerHTML = 
-                '<span>' + data.names[i] + '</span>' + 
+                '<span>' + escape(data.names[i]).slice(0, 13) + '</span>' + 
                 '<span style="color:#303;">' + data.ready[i] + '</span>';
             }
             else{
@@ -229,7 +229,7 @@ var lastSelectCardSprite = null;
 var lastSelectPanelSprite = null;
 var lastActivePanelSprite = null;
 
-
+var backgroundSprite = null;
 
 
 /* Graphics */
@@ -265,6 +265,7 @@ var res_border = 'border';
 var res_bordervertical = 'border_vertical';
 var res_storycardback = 'storycardback';
 var res_borderactive = 'border_active';
+var res_background = 'background';
 
 var url_cardback = "img/cardback.png?random=" + Math.random();
 var url_icons = "img/icons.png?random=" + Math.random();
@@ -272,11 +273,12 @@ var url_border = "img/border.png?random=" + Math.random();
 var url_bordervertical = "img/border_vertical.png?random=" + Math.random();
 var url_storycardback = "img/storycardback.png?random=" + Math.random();
 var url_borderactive = "img/border_active.png?random=" + Math.random();
+var url_background = 'img/bg.png?random=' + Math.random();
 
 var resource_count = 0;
 var resource_loaded = function(){
     resource_count++;
-    if(resource_count == 6){
+    if(resource_count == 7){
         setupUI();
     }
 }
@@ -334,6 +336,17 @@ img_borderactive.onload = function(){
     PIXI.loader.resources[res_borderactive] = {name : res_borderactive, texture : new PIXI.Texture(tex)};
     resource_loaded();
 }
+
+var img_background = new Image();
+img_background.crossOrigin = true;
+img_background.src = url_background;
+img_background.onload = function(){
+    let tex = new PIXI.BaseTexture(this);
+    PIXI.loader.resources[res_background] = {name : res_background, texture : new PIXI.Texture(tex)};
+    resource_loaded();
+}
+
+
 
 
 // PIXI.loader
@@ -487,6 +500,10 @@ function hideActionCardsOnTable(){
 
 function setupUI(){
 
+    backgroundSprite = new PIXI.Sprite(PIXI.loader.resources[res_background].texture);
+    backgroundSprite.width = window.innerWidth; backgroundSprite.height = window.innerWidth / 2;
+    stage.addChild(backgroundSprite);
+
     /* 4 player panels */
 
     var cardsizex = window.innerWidth / standardScreenWidth * standardCardWidth;
@@ -600,6 +617,8 @@ function setupUI(){
 
 
 function adjustUIPositioning(){
+
+    backgroundSprite.width = window.innerWidth; backgroundSprite.height = window.innerWidth / 2;
 
     var cardsizex = window.innerWidth / standardScreenWidth * standardCardWidth;
     var cardsizey = cardsizex * standardCardHeight / standardCardWidth;
@@ -837,7 +856,7 @@ function adjustTextOverlayPositioning(){
             16.5 * 0.025 * window.innerWidth,
             2 * 0.025 * window.innerWidth,
             1 * 0.025 * window.innerWidth,
-            15 * ratio
+            13 * ratio
         );
 
         setElementPosition(
@@ -860,8 +879,8 @@ socket.on('StartGame', function(data){
 
     for(let i = 0; i < 4; i++){
         playerPanelSprites[i].seatIndex = (i + 4 + mySeat) % 4;
-        playerSeatLabels[i].text = playerPanelSprites[i].seatIndex;
-        playerNameLabels[i].text = playerNameOnSeat[playerPanelSprites[i].seatIndex];
+        playerSeatLabels[i].setText(playerPanelSprites[i].seatIndex);
+        playerNameLabels[i].setText(playerNameOnSeat[playerPanelSprites[i].seatIndex]);
     }
 });
 
