@@ -229,7 +229,7 @@ var lastSelectCardSprite = null;
 var lastSelectPanelSprite = null;
 var lastActivePanelSprite = null;
 
-var backgroundSprite = null;
+// var backgroundSprite = null;
 
 
 /* Graphics */
@@ -251,7 +251,7 @@ var type = "canvas";
 
 var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerWidth/2);
 renderer.view.style.border = "1px black";
-renderer.backgroundColor = 0x061639;
+renderer.backgroundColor = 0xababf3;
 renderer.view.style.position = "absolute";
 renderer.autoResize = true;
 
@@ -279,7 +279,7 @@ var assetLoaded = false;
 var resource_count = 0;
 var resource_loaded = function(){
     resource_count++;
-    if(resource_count == 7){
+    if(resource_count >= 6){
         setupUI();
     }
 }
@@ -338,14 +338,14 @@ img_borderactive.onload = function(){
     resource_loaded();
 }
 
-var img_background = new Image();
-img_background.crossOrigin = true;
-img_background.src = url_background;
-img_background.onload = function(){
-    let tex = new PIXI.BaseTexture(this);
-    PIXI.loader.resources[res_background] = {name : res_background, texture : new PIXI.Texture(tex)};
-    resource_loaded();
-}
+// var img_background = new Image();
+// img_background.crossOrigin = true;
+// img_background.src = url_background;
+// img_background.onload = function(){
+//     let tex = new PIXI.BaseTexture(this);
+//     PIXI.loader.resources[res_background] = {name : res_background, texture : new PIXI.Texture(tex)};
+//     resource_loaded();
+// }
 
 
 
@@ -502,9 +502,9 @@ function hideActionCardsOnTable(){
 
 function setupUI(){
 
-    backgroundSprite = new PIXI.Sprite(PIXI.loader.resources[res_background].texture);
-    backgroundSprite.width = window.innerWidth; backgroundSprite.height = window.innerWidth / 2;
-    stage.addChild(backgroundSprite);
+    // backgroundSprite = new PIXI.Sprite(PIXI.loader.resources[res_background].texture);
+    // backgroundSprite.width = window.innerWidth; backgroundSprite.height = window.innerWidth / 2;
+    // stage.addChild(backgroundSprite);
 
     /* 4 player panels */
 
@@ -623,7 +623,7 @@ function setupUI(){
 
 function adjustUIPositioning(){
 
-    backgroundSprite.width = window.innerWidth; backgroundSprite.height = window.innerWidth / 2;
+    // backgroundSprite.width = window.innerWidth; backgroundSprite.height = window.innerWidth / 2;
 
     var cardsizex = window.innerWidth / standardScreenWidth * standardCardWidth;
     var cardsizey = cardsizex * standardCardHeight / standardCardWidth;
